@@ -15,7 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from .views import livez
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("livez", view=livez, name="livez"),
 ]
