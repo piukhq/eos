@@ -1,6 +1,6 @@
 FROM binkhq/python:3.8
 
-WORKDIR /eos
+WORKDIR /app
 ADD . .
 
 RUN apt-get update && \
@@ -13,4 +13,4 @@ RUN apt-get update && \
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD [ "gunicorn", "--workers=2", "--threads=2", "--error-logfile=-", \
-    "--access-logfile=-", "--bind=0.0.0.0:9000", "eos.wsgi:application" ]
+    "--access-logfile=-", "--bind=0.0.0.0:9000", "app.wsgi:application" ]

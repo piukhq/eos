@@ -49,7 +49,7 @@ AMEX_CLIENT_SECRET=<client_secret - optional if in the vault>
 REDIS_URL=redis://localhost:6379/0
 ```
 
-Other Django settings may be overridable in the .env file. See the `eos.settings` module.
+Other Django settings may be overridable in the .env file. See the `app.settings` module.
 
 ### Database
 

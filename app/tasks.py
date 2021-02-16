@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import transaction
 
 import rq
-from eos.agents.amex import MerchantRegApi
+from app.agents.amex import MerchantRegApi
 from redis import Redis
 
 from mids.models import BatchItem, BatchItemAction, BatchItemStatus

@@ -5,7 +5,7 @@ import rq
 
 from django.core.management.base import BaseCommand
 
-from eos.tasks import task_queue, redis
+from app.tasks import task_queue, redis
 
 
 logger = logging.getLogger(__name__)

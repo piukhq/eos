@@ -20,7 +20,7 @@ from django.utils.http import urlencode
 from django.utils.safestring import SafeText
 from redis.exceptions import RedisError
 
-from eos import tasks
+from app import tasks
 from mids.models import Batch, BatchItem, BatchItemAction, BatchItemStatus
 
 logger = logging.getLogger(__name__)

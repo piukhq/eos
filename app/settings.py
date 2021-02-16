@@ -68,8 +68,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
-    "eos.apps.EosAdminConfig",
-    # "django.contrib.admin",
+    "app.apps.EosAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -88,7 +87,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "eos.urls"
+ROOT_URLCONF = "app.urls"
 
 TEMPLATES = [
     {
@@ -106,7 +105,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "eos.wsgi.application"
+WSGI_APPLICATION = "app.wsgi.application"
 
 
 # Database
@@ -189,7 +188,7 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
-        "eos": {
+        "app": {
             "level": LOG_LEVEL,
             "handlers": ["console"] if not TESTING else ["null"],
             "propagate": False,
