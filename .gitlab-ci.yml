@@ -6,11 +6,9 @@ stages:
   - build
   - prod
 
-default:
-  image: binkhq/python:3.8
-
 tests:
   stage: tests
+  image: binkhq/python:3.8
   variables: &variables
     POSTGRES_DB: eos
     POSTGRES_HOST_AUTH_METHOD: trust
@@ -35,6 +33,7 @@ tests:
 
 complexity:
   stage: tests
+  image: binkhq/python:3.8
   variables: *variables
   before_script: *setup
   script:
@@ -42,6 +41,7 @@ complexity:
 
 style:
   stage: tests
+  image: binkhq/python:3.8
   variables: *variables
   before_script: *setup
   script:
@@ -49,6 +49,7 @@ style:
 
 type-check:
   stage: tests
+  image: binkhq/python:3.8
   variables: *variables
   before_script: *setup
   script:
