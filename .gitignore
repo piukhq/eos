@@ -1,0 +1,15 @@
+*.db
+*.egg-info
+.pytest_cache
+__pycache__
+.idea
+*.org
+monitor
+.mypy_cache
+.coverage
+.env
+htmlcov
+.vscode
+.DS_Store
+build
+*.csv

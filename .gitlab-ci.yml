@@ -1,0 +1,117 @@
+stages:
+  - tests
+  - dev
+  - staging
+  - preprod
+  - build
+  - prod
+
+default:
+  image: binkhq/python:3.8
+
+tests:
+  stage: tests
+  variables: &variables
+    POSTGRES_DB: eos
+    POSTGRES_HOST_AUTH_METHOD: trust
+    DATABASE_USER: postgres
+    DATABASE_HOST: postgres
+    DATABASE_NAME: eos
+    REDIS_HOST: "http://localhost"
+    REDIS_DB: 0
+    KEY_VAULT: "https://localhost"
+    AMEX_API_HOST: "http://localhost"
+    AMEX_CLIENT_ID: "dummy-amex-client-id"
+    AMEX_CLIENT_SECRET: "dummy-amex-client-secret"
+  before_script: &setup
+    - pip install pipenv
+    - pipenv install --dev --system --deploy --ignore-pipfile
+    - pip freeze
+  script:
+    - coverage run manage.py test -v 2
+    - coverage report
+  services:
+    - postgres:11
+
+complexity:
+  stage: tests
+  variables: *variables
+  before_script: *setup
+  script:
+    - xenon --max-average A --max-modules B --max-absolute B .
+
+style:
+  stage: tests
+  variables: *variables
+  before_script: *setup
+  script:
+    - flake8 && black --line-length 120 --check .
+
+type-check:
+  stage: tests
+  variables: *variables
+  before_script: *setup
+  script:
+    - mypy .
+
+dev:
+  stage: dev
+  environment:
+    name: dev
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker build --pull -t "$CI_REGISTRY/eos:develop-$CI_COMMIT_SHORT_SHA" .
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$CI_REGISTRY/aqua-scanner:5.0" scan --local "$CI_REGISTRY/eos:develop-$CI_COMMIT_SHORT_SHA" --host https://aqua.uksouth.bink.sh:30001/ --user scanner --password $AQUA_PASSWORD --show-negligible --policies Bink --text
+    - docker push "$CI_REGISTRY/eos:develop-$CI_COMMIT_SHORT_SHA"
+  only:
+    - develop
+
+staging:
+  stage: staging
+  environment:
+    name: staging
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker build --pull -t "$CI_REGISTRY/eos:staging-$CI_COMMIT_SHORT_SHA" .
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$CI_REGISTRY/aqua-scanner:5.0" scan --local "$CI_REGISTRY/eos:staging-$CI_COMMIT_SHORT_SHA" --host https://aqua.uksouth.bink.sh:30001/ --user scanner --password $AQUA_PASSWORD --show-negligible --policies Bink --text
+    - docker push "$CI_REGISTRY/eos:staging-$CI_COMMIT_SHORT_SHA"
+  only:
+    - staging
+
+preprod:
+  stage: preprod
+  environment:
+    name: preprod
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker build --pull -t "$CI_REGISTRY/eos:preprod-$CI_COMMIT_SHORT_SHA" .
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$CI_REGISTRY/aqua-scanner:5.0" scan --local "$CI_REGISTRY/eos:preprod-$CI_COMMIT_SHORT_SHA" --host https://aqua.uksouth.bink.sh:30001/ --user scanner --password $AQUA_PASSWORD --show-negligible --policies Bink --text
+    - docker push "$CI_REGISTRY/eos:preprod-$CI_COMMIT_SHORT_SHA"
+  when: manual
+  only:
+    - master
+
+build:
+  stage: build
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker build --pull -t "$CI_REGISTRY/eos:$CI_COMMIT_TAG" .
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$CI_REGISTRY/aqua-scanner:5.0" scan --local "$CI_REGISTRY/eos:$CI_COMMIT_TAG" --host https://aqua.uksouth.bink.sh:30001/ --user scanner --password $AQUA_PASSWORD --show-negligible --policies Bink --text
+    - docker push "$CI_REGISTRY/eos:$CI_COMMIT_TAG"
+  only:
+    - tags
+
+release-prod:
+  stage: prod
+  image: binkops.azurecr.io/tagbot:latest
+  environment:
+    name: prod
+  script:
+    - tagbot --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" --source "$CI_REGISTRY/eos:$CI_COMMIT_TAG" --tag "prod-$CI_COMMIT_TAG"
+  when: manual
+  only:
+    - tags

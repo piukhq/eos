@@ -1,0 +1,26 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+azure-keyvault = "*"
+azure-identity = "*"
+django = "*"
+psycopg2-binary = "*"
+redis = "*"
+requests = "*"
+rq = "*"
+sentry-sdk = "*"
+
+[dev-packages]
+coverage = "*"
+black = "*"
+flake8 = "*"
+mypy = "*"
+xenon = "*"
+responses = "*"
+django-stubs = "*"
+
+[pipenv]
+allow_prereleases = true

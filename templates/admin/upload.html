@@ -1,0 +1,22 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:app_list' 'mids' %}">Mids</a>
+    &rsaquo; <a href="{% url 'admin:mids_batch_changelist' %}">Batches</a>
+    &rsaquo; {{title}}
+</div>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<form action="." method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div>
+        {{form}}
+    </div>
+    <div>
+        <input type="submit" value="Upload" />
+    </div>
+</form>
+{% endblock content %}
