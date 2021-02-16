@@ -46,8 +46,7 @@ KEY_VAULT=https://bink-uksouth-dev-com.vault.azure.net/
 AMEX_API_HOST=https://api.dev2s.americanexpress.com
 AMEX_CLIENT_ID=<client_id - optional if in the vault>
 AMEX_CLIENT_SECRET=<client_secret - optional if in the vault>
-REDIS_HOST=localhost
-REDIS_DB=0
+REDIS_URL=redis://localhost:6379/0
 ```
 
 Other Django settings may be overridable in the .env file. See the `eos.settings` module.

@@ -237,11 +237,7 @@ if not (TESTING or getenv("TEST_RUNNER", conv=boolconv, required=False)):
         logger.error("Could not retrieve cert/key data from vault")
 
 
-REDIS_HOST = getenv("REDIS_HOST")
-REDIS_PORT = getenv("REDIS_PORT", default="6379")
-REDIS_USER = getenv("REDIS_USER", required=False)
-REDIS_PASS = getenv("REDIS_PASS", required=False)
-REDIS_DB = getenv("REDIS_DB", conv=int)
+REDIS_URL = getenv("REDIS_URL")
 
 SENTRY_DSN = getenv("SENTRY_DSN", required=False)
 SENTRY_ENV = getenv("SENTRY_ENV", default="unset").lower()

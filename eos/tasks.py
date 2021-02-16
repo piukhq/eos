@@ -11,12 +11,8 @@ from mids.models import BatchItem, BatchItemAction, BatchItemStatus
 
 logger = logging.getLogger(__name__)
 
-
-redis = Redis(
-    host=settings.REDIS_HOST,
-    port=settings.REDIS_PORT,
-    db=settings.REDIS_DB,
-    password=settings.REDIS_PASS,
+redis = Redis.from_url(
+    settings.REDIS_URL,
     socket_connect_timeout=3,
     socket_keepalive=True,
     retry_on_timeout=False,

@@ -15,8 +15,7 @@ tests:
     DATABASE_USER: postgres
     DATABASE_HOST: postgres
     DATABASE_NAME: eos
-    REDIS_HOST: "http://localhost"
-    REDIS_DB: 0
+    REDIS_URL: "redis://localhost:6379/0"
     KEY_VAULT: "https://localhost"
     AMEX_API_HOST: "http://localhost"
     AMEX_CLIENT_ID: "dummy-amex-client-id"
