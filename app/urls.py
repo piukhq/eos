@@ -20,7 +20,7 @@ from django.views.static import serve
 from .views import livez
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("livez", view=livez, name="livez"),
-    re_path(r"^static/(?P<path>.*)$", serve, kwargs={"document_root": settings.STATIC_ROOT}),
+    path("mids/admin/", admin.site.urls),
+    re_path(r"^mids/static/(?P<path>.*)$", serve, kwargs={"document_root": settings.STATIC_ROOT}),
 ]
