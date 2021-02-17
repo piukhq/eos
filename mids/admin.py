@@ -65,7 +65,7 @@ queue_batches_action.short_description = "Process batches"  # type:ignore
 @admin.register(Batch)
 class BatchAdmin(admin.ModelAdmin):
     list_display = ["batch_filter_link", "time_uploaded", "export_link", "processed"]
-    fields = ["input_file"]
+    fields = readonly_fields = ["file_name", "time_uploaded"]
     actions = [queue_batches_action]
 
     # def user_email(self, obj: Batch) -> str:
@@ -184,14 +184,19 @@ class BatchItemAdmin(admin.ModelAdmin):
         "merchant_slug",
         "provider_slug",
         "status",
+        "error_code",
         "error_type",
+        "error_description",
         "action",
         "created",
         "updated",
+        "request_timestamp",
+        "response",
     ]
     list_filter = ["status", "error_type", "action", "merchant_slug"]
     search_fields = ["mid"]
     raw_id_fields = ["batch"]
+    fields = readonly_fields = list_display
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         return super().get_queryset(request).select_related("batch")
