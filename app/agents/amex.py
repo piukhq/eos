@@ -86,6 +86,7 @@ class MerchantRegApi:
             cert=(settings.AMEX_CLIENT_CERT_PATH, settings.AMEX_CLIENT_PRIV_KEY_PATH),
             headers=headers,
             data=payload,
+            timeout=(3.05, 10),
         )
         return response, timestamp
 
