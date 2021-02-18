@@ -21,6 +21,6 @@ from .views import livez
 
 urlpatterns = [
     path("livez", view=livez, name="livez"),
-    path("mids/admin/", admin.site.urls),
-    re_path(r"^mids/static/(?P<path>.*)$", serve, kwargs={"document_root": settings.STATIC_ROOT}),
+    path("eos/admin/", admin.site.urls),
+    re_path(r"^eos/static/(?P<path>.*)$", serve, kwargs={"document_root": settings.STATIC_ROOT}),
 ]
