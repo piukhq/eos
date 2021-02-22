@@ -24,8 +24,5 @@ done
 echo "Collecting statics"
 python ./manage.py collectstatic --noinput
 
-echo "Migrating database"
-python ./manage.py migrate --noinput
-
 echo "Starting gunicorn"
 exec "$@"
