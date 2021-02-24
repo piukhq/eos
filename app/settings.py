@@ -188,10 +188,13 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
-        "app": {
-            "level": LOG_LEVEL,
-            "handlers": ["console"] if not TESTING else ["null"],
-            "propagate": False,
+        **{
+            field: {
+                "level": LOG_LEVEL,
+                "handlers": ["console"] if not TESTING else ["null"],
+                "propagate": False,
+            }
+            for field in ("app", "mids", "asyncio")
         },
     },
 }

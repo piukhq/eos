@@ -1,4 +1,7 @@
 import logging
+import typing as t
+
+from datetime import date
 
 from django.conf import settings
 from django.db import transaction
@@ -22,6 +25,7 @@ task_queue = rq.Queue("amex", connection=redis)
 
 
 def process_item(item_id: int) -> None:
+    logger.debug(f"Processing BatchItem with id: {item_id}")
     with transaction.atomic():
         try:
             item = BatchItem.objects.get(id=item_id, status=BatchItemStatus.QUEUED)
@@ -31,11 +35,13 @@ def process_item(item_id: int) -> None:
 
         api = MerchantRegApi()
         if item.action == BatchItemAction.ADD:
-            response, request_timestamp = api.add_merchant(item.mid, item.merchant_slug, item.start_date, item.end_date)
+            response, request_timestamp = api.add_merchant(
+                item.mid, item.merchant_slug, t.cast(date, item.start_date), t.cast(date, item.end_date)
+            )
         elif item.action == BatchItemAction.DELETE:
             response, request_timestamp = api.delete_merchant(item.mid, item.merchant_slug)
         else:
-            logger.warning("Item with id {} has unrecognised action ({})item. Skipping...".format(item.id, item.action))
+            logger.warning("Item with id {} has unrecognised action ({})".format(item.id, item.action))
             item.status = BatchItemStatus.ERROR
             item.save(update_fields=["status"])
             return
@@ -43,11 +49,16 @@ def process_item(item_id: int) -> None:
         item.response = data = response.json()
         item.request_timestamp = request_timestamp
         if "error_code" in data:
-            fields = ["error_code", "error_type", "error_description"]
-            for f in fields:
+            # error code strings are not consistent e.g.
+            # "Invalid Request", "Invalid_request" etc
+            # Original will be preserved in the response field
+            item.error_code = data["error_code"].replace("_", " ").lower()
+            update_fields = ["error_code"]
+            for f in ("error_type", "error_description"):
                 setattr(item, f, data[f])
+                update_fields.append(f)
             item.status = BatchItemStatus.ERROR
         else:
-            fields = []
+            update_fields = []
             item.status = BatchItemStatus.DONE
-        item.save(update_fields=fields + ["status", "response", "request_timestamp"])
+        item.save(update_fields=update_fields + ["status", "response", "request_timestamp"])
