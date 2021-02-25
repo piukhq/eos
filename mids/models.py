@@ -16,7 +16,6 @@ class Batch(models.Model):
 class BatchItemAction(models.TextChoices):
     ADD = "A", "Add"
     DELETE = "D", "Delete"
-    UPDATE = "U", "Update"
 
 
 class BatchItemStatus(models.IntegerChoices):
@@ -29,8 +28,8 @@ class BatchItemStatus(models.IntegerChoices):
 class BatchItem(models.Model):
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
     mid = models.CharField(max_length=50)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     merchant_slug = models.CharField(max_length=50)
     provider_slug = models.CharField(max_length=50)
     status = models.IntegerField(choices=BatchItemStatus.choices)
@@ -42,3 +41,6 @@ class BatchItem(models.Model):
     error_description = models.CharField(max_length=100, blank=True)
     request_timestamp = models.DateTimeField(null=True, blank=True)
     response = models.JSONField(null=True, blank=True)  # type:ignore
+
+    class Meta:
+        ordering = ["id"]

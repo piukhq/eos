@@ -63,11 +63,7 @@ SECRET_KEY = "=@%7ks9yhdz^n-qa5-w%8nl0)p6064=yc6)dpfoljxu9gqd5t%"
 DEBUG = getenv("DEBUG", "True", conv=boolconv)
 
 ALLOWED_HOSTS = ["*"]
-
-CSRF_TRUSTED_ORIGINS = [
-    "127.0.0.1",
-    ".bink.com",
-]
+CSRF_TRUSTED_ORIGINS = ["127.0.0.1", ".bink.com"]
 
 # Application definition
 
@@ -193,10 +189,13 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
-        "app": {
-            "level": LOG_LEVEL,
-            "handlers": ["console"] if not TESTING else ["null"],
-            "propagate": False,
+        **{
+            field: {
+                "level": LOG_LEVEL,
+                "handlers": ["console"] if not TESTING else ["null"],
+                "propagate": False,
+            }
+            for field in ("app", "mids", "asyncio")
         },
     },
 }

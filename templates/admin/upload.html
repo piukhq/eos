@@ -19,4 +19,22 @@
         <input type="submit" value="Upload" />
     </div>
 </form>
+
+{% if file_errors %}
+    <table>
+    <tr><th>MID</th><th>Errors</th>
+    {% for mid, errors in file_errors.items %}
+    <tr>
+        <td>{{mid}}<td>
+        <td>
+            <ul>
+                {% for error in errors %}
+                    <li>{{error}}</li>
+                {% endfor %}
+            </ul>
+        </td>
+    </tr>
+    {% endfor %}
+    </table>
+{% endif %}
 {% endblock content %}
