@@ -13,7 +13,7 @@ tests:
     DATABASE_USER: postgres
     DATABASE_HOST: postgres
     DATABASE_NAME: eos
-    REDIS_URL: "redis://localhost:6379/0"
+    REDIS_URL: "redis://redis:6379/0"
     KEY_VAULT: "https://localhost"
     AMEX_API_HOST: "http://localhost"
     AMEX_CLIENT_ID: "dummy-amex-client-id"
@@ -27,6 +27,7 @@ tests:
     - coverage report
   services:
     - postgres:11
+    - redis:latest
 
 complexity:
   stage: tests

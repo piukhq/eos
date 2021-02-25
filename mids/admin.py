@@ -2,6 +2,7 @@ import csv
 import io
 import logging
 import typing as t
+from datetime import date, datetime
 
 import rq
 
@@ -27,10 +28,15 @@ logger = logging.getLogger(__name__)
 
 
 class FileUploadForm(forms.Form):
-    instance = None
     input_file = forms.FileField(
         label="Select MID batch file",
     )
+
+    def clean_input_file(self) -> t.Any:
+        file = self.cleaned_data["input_file"]
+        if not file.name.lower().endswith(".csv"):
+            raise forms.ValidationError(".csv files only")
+        return file
 
 
 def queue_batches(batches: QuerySet) -> t.Tuple[t.List[int], t.List[int]]:
@@ -60,6 +66,15 @@ def queue_batches_action(modeladmin: admin.ModelAdmin, request: HttpRequest, que
 
 
 queue_batches_action.short_description = "Process batches"  # type:ignore
+
+
+class TypedRow(t.TypedDict):
+    mid: t.Optional[str]
+    start_date: t.Optional[date]
+    end_date: t.Optional[date]
+    merchant_slug: t.Optional[str]
+    provider_slug: t.Optional[str]
+    action: t.Optional[BatchItemAction]
 
 
 @admin.register(Batch)
@@ -135,42 +150,111 @@ class BatchAdmin(admin.ModelAdmin):
         url = reverse("admin:export_as_csv", args=[obj.id])
         return format_html('<a href="{}">Export</a>', url)
 
-    ACTION_MAP = {"A": BatchItemAction.ADD, "D": BatchItemAction.DELETE}
+    REQUIRED_COLUMNS = ["mid", "start_date", "end_date", "merchant_slug", "provider_slug", "action"]
+    PROVIDERS = ["amex"]
+
+    def validate_headers(
+        self, request: HttpRequest, fieldnames: t.Set[str]
+    ) -> t.Tuple[t.Optional[t.List], t.Optional[t.List]]:
+        required_columns = set(self.REQUIRED_COLUMNS)
+        extra = list(fieldnames - required_columns) or None
+        missing = list(required_columns - fieldnames) or None
+        return extra, missing
+
+    def _validate_action(self, row: t.Dict[str, str], typed_row: TypedRow) -> t.List[str]:
+        errors = []
+
+        try:
+            typed_row["action"] = BatchItemAction(row["action"].strip().upper())
+        except ValueError:
+            errors.append(f"Unrecognised action value: {row['action'].strip()}")
+        else:
+            if typed_row["action"] == BatchItemAction.ADD:
+                for field in ("start_date", "end_date"):
+                    try:
+                        typed_row[field] = datetime.strptime(row[field].strip(), "%Y-%m-%d")  # type: ignore
+                    except ValueError:
+                        errors.append(f"Invalid {field}: {row[field].strip() or '<empty>'}")
+            else:
+                typed_row["start_date"] = typed_row["end_date"] = None
+        return errors
+
+    def _validate_row(self, row: t.Dict[str, str]) -> t.Tuple[t.Optional[TypedRow], t.List[str]]:
+        errors = []
+        if any(row.get(field) is None for field in self.REQUIRED_COLUMNS):
+            errors.append("Missing row values")
+            return None, errors
+
+        typed_row = TypedRow(
+            mid=row["mid"].strip(),
+            start_date=None,
+            end_date=None,
+            merchant_slug=row["merchant_slug"].strip(),
+            provider_slug=row["provider_slug"].strip(),
+            action=None,
+        )
+        errors.extend(self._validate_action(row, typed_row))
+
+        if typed_row["provider_slug"] not in self.PROVIDERS:
+            errors.append(f"Invalid provider: {row['provider_slug']}")
+
+        if (
+            typed_row["start_date"] is not None
+            and typed_row["end_date"] is not None
+            and typed_row["start_date"] >= typed_row["end_date"]
+        ):
+            errors.append(f"Start date ({row['start_date']}) >= end date ({row['end_date']})")
+        return typed_row, errors
+
+    def _process_rows(self, reader: csv.DictReader) -> t.Tuple[t.List[TypedRow], t.Dict[str, t.List[str]]]:
+        errors = {}
+        typed_rows: t.List[TypedRow] = []
+        for row in reader:
+            typed_row, row_errors = self._validate_row(row)
+            if row_errors:
+                errors[row["mid"]] = row_errors
+            elif typed_row:
+                typed_rows.append(typed_row)
+        return typed_rows, errors
 
     def add_view(
         self, request: HttpRequest, form_url: str = "", extra_context: t.Optional[t.Dict] = None
     ) -> HttpResponse:
+        errors = None
         if request.method == "POST":
             form = FileUploadForm(request.POST, request.FILES)
-            # mid,start_date,end_date,merchant_slug,provider_slug,action
-            # 12345,2021-01-01,2999-12-31,wasabi-club,amex,A
             if form.is_valid():
-                with transaction.atomic():
-                    file = request.FILES["input_file"]
+                file = request.FILES["input_file"]
+                try:
                     reader = csv.DictReader(file.read().decode().splitlines())
-                    batch = Batch.objects.create(file_name=file.name)
-                    BatchItem.objects.bulk_create(
-                        [
-                            BatchItem(
-                                batch=batch,
-                                mid=row["mid"],
-                                start_date=row["start_date"],
-                                end_date=row["end_date"],
-                                merchant_slug=row["merchant_slug"],
-                                provider_slug=row["provider_slug"],
-                                action=self.ACTION_MAP[row["action"].upper()],
-                                status=BatchItemStatus.PENDING,
-                            )
-                            for row in reader
-                        ]
-                    )
+                except UnicodeDecodeError:
+                    messages.error(request, "Invalid file format")
+                    return redirect(reverse("admin:mids_batch_add"))
 
-                messages.success(request, "Batch imported")
-                return redirect(reverse("admin:mids_batch_changelist"))
+                extra, missing = self.validate_headers(request, set(reader.fieldnames or []))
+                if extra or missing:
+                    messages.error(request, f"Required column headers: {', '.join(self.REQUIRED_COLUMNS)}")
+                    return redirect(reverse("admin:mids_batch_add"))
+
+                typed_rows, errors = self._process_rows(reader)
+
+                if not errors:
+                    with transaction.atomic():
+                        batch = Batch.objects.create(file_name=file.name)
+                        BatchItem.objects.bulk_create(
+                            [BatchItem(batch=batch, status=BatchItemStatus.PENDING, **row) for row in typed_rows]
+                        )
+
+                    messages.success(request, "Batch imported")
+                    return redirect(reverse("admin:mids_batch_changelist"))
+                else:
+                    messages.error(request, "Invalid file contents. Please see below")
         else:
             form = FileUploadForm()
         return TemplateResponse(
-            request, "admin/upload.html", {"form": form, "title": "Upload batch", "site_header": settings.SITE_HEADER}
+            request,
+            "admin/upload.html",
+            {"form": form, "file_errors": errors, "title": "Upload batch", "site_header": settings.SITE_HEADER},
         )
 
 
