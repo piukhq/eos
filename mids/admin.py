@@ -193,11 +193,17 @@ class BatchAdmin(admin.ModelAdmin):
             provider_slug=row["provider_slug"].strip(),
             action=None,
         )
-        errors.extend(self._validate_action(row, typed_row))
+
+        required_text_fields = ("mid", "merchant_slug", "provider_slug")
+        for field in required_text_fields:
+            if not typed_row[field]:  # type: ignore
+                errors.append(f"Missing row value for field: {field}")
+                return None, errors
 
         if typed_row["provider_slug"] not in self.PROVIDERS:
-            errors.append(f"Invalid provider: {row['provider_slug']}")
+            errors.append(f"Invalid provider: {typed_row['provider_slug']}")
 
+        errors.extend(self._validate_action(row, typed_row))
         if (
             typed_row["start_date"] is not None
             and typed_row["end_date"] is not None

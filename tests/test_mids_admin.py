@@ -85,6 +85,22 @@ class TestMidsAdmin(TestCase):
         response = self.upload_file(file_content)
         self.assertContains(response, "Invalid provider: visa")
 
+    def test_csv_validation_missing_mid(self) -> None:
+        file_content = b"""mid,start_date,end_date,merchant_slug,provider_slug,action
+,2020-12-31,2021-12-31,bink_test_merchant,amex,a
+"""
+        response = self.upload_file(file_content)
+        self.assertEqual(0, BatchItem.objects.count())
+        self.assertContains(response, "Missing row value for field: mid")
+
+    def test_csv_validation_missing_merchant_slug(self) -> None:
+        file_content = b"""mid,start_date,end_date,merchant_slug,provider_slug,action
+4548436161,2020-12-31,2021-12-31,,amex,a
+"""
+        response = self.upload_file(file_content)
+        self.assertEqual(0, BatchItem.objects.count())
+        self.assertContains(response, "Missing row value for field: merchant_slug")
+
     def test_invalid_format(self) -> None:
         file_content = (
             b"\x89PNG\r\n\xce\x98\xce\xb5\xce\xac \xcf\x84\xce\xb7\xcf\x82 \xce\x91\xcf\x85\xce\xb3\xce\xae\xcf\x82"
