@@ -17,10 +17,14 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import path, re_path
 from django.views.static import serve
-from .views import livez
+from . import views
+from .views import livez, login
 
 urlpatterns = [
     path("livez", view=livez, name="livez"),
+    path('eos/admin/login/', views.login),
+    path('eos/admin/oidc/callback/', views.auth, name='auth'),
+    path('callback/', admin.auth, name='oidc_callback'),
     path("eos/admin/", admin.site.urls),
     re_path(r"^eos/static/(?P<path>.*)$", serve, kwargs={"document_root": settings.STATIC_ROOT}),
 ]
