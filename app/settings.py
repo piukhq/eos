@@ -252,3 +252,11 @@ if SENTRY_DSN is not None:
         environment=SENTRY_ENV,
         integrations=[DjangoIntegration()],
     )
+
+# Custom authentication
+
+AUTHENTICATION_BACKENDS = ["app.auth.AutoUserCreationBackend"]
+
+OAUTH_TENANT_ID = getenv("OAUTH_TENANT_ID")
+OAUTH_CLIENT_ID = getenv("OAUTH_CLIENT_ID")
+OAUTH_CLIENT_SECRET = getenv("OAUTH_CLIENT_SECRET")
