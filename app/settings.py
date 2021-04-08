@@ -251,3 +251,18 @@ if SENTRY_DSN is not None:
         environment=SENTRY_ENV,
         integrations=[DjangoIntegration()],
     )
+
+# Custom authentication
+
+
+# AzureAD SSO
+
+SSO_ENABLED = getenv("SSO_ENABLED", default="true", conv=boolconv)
+
+OAUTH_TENANT_ID = getenv("OAUTH_TENANT_ID", required=SSO_ENABLED)
+OAUTH_CLIENT_ID = getenv("OAUTH_CLIENT_ID", required=SSO_ENABLED)
+OAUTH_CLIENT_SECRET = getenv("OAUTH_CLIENT_SECRET", required=SSO_ENABLED)
+
+# if SSO is disabled, we use Django's default auth backend
+if SSO_ENABLED:
+    AUTHENTICATION_BACKENDS = ["app.auth.AutoUserCreationBackend"]
