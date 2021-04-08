@@ -12,6 +12,7 @@ redis = "*"
 requests = "*"
 rq = "*"
 sentry-sdk = "*"
+authlib = "*"
 
 [dev-packages]
 coverage = "*"
