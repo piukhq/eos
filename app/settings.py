@@ -268,10 +268,7 @@ OAUTH_CLIENT_SECRET = getenv("OAUTH_CLIENT_SECRET", required=SSO_ENABLED)
 def boolconv(s: str) -> bool:
     return s.lower() in ["true", "t", "yes"]
 
+
 # if SSO is disabled, we use Django's default auth backend
 if SSO_ENABLED:
     AUTHENTICATION_BACKENDS = ["app.auth.AutoUserCreationBackend"]
-
-
-
-
