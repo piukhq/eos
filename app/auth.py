@@ -1,11 +1,12 @@
 import secrets
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, models
 from django.contrib.auth.backends import ModelBackend
+from django.http import HttpRequest
 
 
 class AutoUserCreationBackend(ModelBackend):
-    def authenticate(self, request, username):
+    def authenticate(self, request: HttpRequest, username: str) -> models.User:  # type:ignore
         User = get_user_model()
 
         try:
@@ -14,4 +15,4 @@ class AutoUserCreationBackend(ModelBackend):
         except User.DoesNotExist:
             # create a user with a random password
             pw = secrets.token_hex(32)
-            return User.objects.create_superuser(username, password=pw)
+            return User.objects.create_superuser(username, email=username, password=pw)

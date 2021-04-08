@@ -16,7 +16,7 @@ oauth.register(
 )
 
 
-def oauth_login(request):
+def oauth_login(request: HttpRequest) -> HttpResponse:
     """
     /admin/login/ handler - redirects to Azure OAuth flow.
     """
@@ -24,7 +24,7 @@ def oauth_login(request):
     return oauth.eos.authorize_redirect(request, redirect_uri)
 
 
-def oauth_callback(request):
+def oauth_callback(request: HttpRequest) -> HttpResponse:
     """
     /admin/oidc/callback/ handler - attempts to authenticate & log the user in.
     """
@@ -41,5 +41,5 @@ def oauth_callback(request):
     return redirect("admin:index")
 
 
-def livez(request: HttpRequest) -> JsonResponse:
+def livez(request: HttpRequest) -> HttpResponse:
     return JsonResponse({}, status=204)

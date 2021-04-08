@@ -24,10 +24,12 @@ urlpatterns = [
     re_path(r"^eos/static/(?P<path>.*)$", serve, kwargs={"document_root": settings.STATIC_ROOT}),
 ]
 if settings.SSO_ENABLED:
-    urlpatterns.extend([
-        path("eos/admin/login/", oauth_login),
-        path("eos/admin/oidc/callback/", oauth_callback),
-    ])
+    urlpatterns.extend(
+        [
+            path("eos/admin/login/", oauth_login),
+            path("eos/admin/oidc/callback/", oauth_callback),
+        ]
+    )
 
 # this must be last to allow the admin/login override to work
 urlpatterns.append(path("eos/admin/", admin.site.urls))
