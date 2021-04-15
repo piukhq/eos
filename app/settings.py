@@ -262,6 +262,9 @@ SSO_ENABLED = getenv("SSO_ENABLED", default="true", conv=boolconv)
 OAUTH_TENANT_ID = getenv("OAUTH_TENANT_ID", required=SSO_ENABLED)
 OAUTH_CLIENT_ID = getenv("OAUTH_CLIENT_ID", required=SSO_ENABLED)
 OAUTH_CLIENT_SECRET = getenv("OAUTH_CLIENT_SECRET", required=SSO_ENABLED)
+OAUTH_REDIRECT_URI = getenv(
+    "OAUTH_REDIRECT_URI", required=SSO_ENABLED, default="http://localhost:9000/eos/admin/oidc/callback/"
+)
 
 # if SSO is disabled, we use Django's default auth backend
 if SSO_ENABLED:
