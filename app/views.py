@@ -13,6 +13,8 @@ oauth.register(
     client_secret=settings.OAUTH_CLIENT_SECRET,
     server_metadata_url=f"https://login.microsoftonline.com/{TENANT_ID}/v2.0/.well-known/openid-configuration",
     client_kwargs={"scope": "openid profile email"},
+    redirect_uri=settings.OAUTH_REDIRECT_URI,
+
 )
 
 
