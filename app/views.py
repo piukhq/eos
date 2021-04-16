@@ -21,8 +21,7 @@ def oauth_login(request: HttpRequest) -> HttpResponse:
     """
     /admin/login/ handler - redirects to Azure OAuth flow.
     """
-    redirect_uri = request.build_absolute_uri("/eos/admin/oidc/callback/")
-    return oauth.eos.authorize_redirect(request, redirect_uri)
+    return oauth.eos.authorize_redirect(request, settings.OAUTH_REDIRECT_URI)
 
 
 def oauth_callback(request: HttpRequest) -> HttpResponse:
