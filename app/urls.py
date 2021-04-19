@@ -17,10 +17,19 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import path, re_path
 from django.views.static import serve
-from .views import livez
+from .views import livez, oauth_login, oauth_callback
 
 urlpatterns = [
     path("livez", view=livez, name="livez"),
-    path("eos/admin/", admin.site.urls),
     re_path(r"^eos/static/(?P<path>.*)$", serve, kwargs={"document_root": settings.STATIC_ROOT}),
 ]
+if settings.SSO_ENABLED:
+    urlpatterns.extend(
+        [
+            path("eos/admin/login/", oauth_login),
+            path("eos/admin/oidc/callback/", oauth_callback),
+        ]
+    )
+
+# this must be last to allow the admin/login override to work
+urlpatterns.append(path("eos/admin/", admin.site.urls))
