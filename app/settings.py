@@ -60,7 +60,7 @@ def boolconv(s: str) -> bool:
 SECRET_KEY = "=@%7ks9yhdz^n-qa5-w%8nl0)p6064=yc6)dpfoljxu9gqd5t%"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = getenv("DEBUG", "True", conv=boolconv)
+DEBUG = getenv("DEBUG", "False", conv=boolconv)
 
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ["127.0.0.1", ".bink.com"]
