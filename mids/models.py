@@ -6,7 +6,8 @@ from django.db import models
 class Batch(models.Model):
     file_name = models.CharField(max_length=250, help_text="The name of the uploaded file")
     time_uploaded = models.DateTimeField(auto_now_add=True)
-    # user = auth.models.User()
+    sender_name = models.CharField(max_length=50, blank=True)
+    date_sent = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "Batches"

@@ -39,10 +39,12 @@ class FileUploadForm(forms.Form):
         return file
 
 
-def queue_batches(batches: QuerySet) -> t.Tuple[t.List[int], t.List[int]]:
+def queue_batches(batches: QuerySet, user_name: str) -> t.Tuple[t.List[int], t.List[int]]:
     queued, errors = [], []
     for batch in batches:
         with transaction.atomic():
+            batch.sender_name = user_name
+            batch.date_sent = datetime.now()
             logger.info(f"Queuing items from batch {batch.file_name}")
             for item in batch.batchitem_set.select_for_update().filter(status=BatchItemStatus.PENDING):
                 try:
@@ -51,12 +53,13 @@ def queue_batches(batches: QuerySet) -> t.Tuple[t.List[int], t.List[int]]:
                 except RedisError:
                     errors.append(item.id)
             batch.batchitem_set.filter(id__in=queued).update(status=BatchItemStatus.QUEUED)
+            batch.save()
         logger.info(f"Queued {len(queued)} items from batch {batch.file_name}")
     return queued, errors
 
 
 def queue_batches_action(modeladmin: admin.ModelAdmin, request: HttpRequest, queryset: QuerySet) -> None:
-    queued, errors = queue_batches(queryset)
+    queued, errors = queue_batches(queryset, request.user.get_username())
     if queued:
         messages.info(request, "Queued {} items".format(len(queued)))
     else:
@@ -79,7 +82,7 @@ class TypedRow(t.TypedDict):
 
 @admin.register(Batch)
 class BatchAdmin(admin.ModelAdmin):
-    list_display = ["batch_filter_link", "time_uploaded", "export_link", "processed"]
+    list_display = ["batch_filter_link", "time_uploaded", "export_link", "processed", "sender_name", "date_sent"]
     fields = readonly_fields = ["file_name", "time_uploaded"]
     actions = [queue_batches_action]
 
