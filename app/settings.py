@@ -9,20 +9,15 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-import json
 import logging
 import os
 import sys
 import typing as t
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
-from azure.core.exceptions import ServiceRequestError
-from azure.keyvault.secrets import SecretClient
-from azure.identity import DefaultAzureCredential
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -119,7 +114,7 @@ DATABASES = {
         "PASSWORD": getenv("DATABASE_PASSWORD", required=False),
         "HOST": getenv("DATABASE_HOST", default="127.0.0.1"),
         "PORT": getenv("DATABASE_PORT", default="5432"),
-    }
+    },
 }
 
 # Password validation
@@ -202,42 +197,11 @@ LOGGING = {
 
 SITE_HEADER = "AMEX MID Onboarding"
 
-AMEX_CLIENT_CERT_PATH = None
-AMEX_CLIENT_PRIV_KEY_PATH = None
-
+TEST_RUNNER_SET = getenv("TEST_RUNNER", conv=boolconv, required=False)
 KEY_VAULT = getenv("KEY_VAULT", required=True)
-
-
-def _write_tmp_files(key: str, cert: str) -> t.Tuple[str, ...]:
-    paths = []
-    for data in (key, cert):
-        file = NamedTemporaryFile(delete=False)
-        paths.append(file.name)
-        file.write(data.encode())
-        file.close()
-    return tuple(paths)
-
-
 AMEX_API_HOST = getenv("AMEX_API_HOST", required=False)
 AMEX_CLIENT_ID = getenv("AMEX_CLIENT_ID", required=False)
 AMEX_CLIENT_SECRET = getenv("AMEX_CLIENT_SECRET", required=False)
-
-if not (TESTING or getenv("TEST_RUNNER", conv=boolconv, required=False)):
-    kvclient = SecretClient(vault_url=KEY_VAULT, credential=DefaultAzureCredential())
-    AMEX_CLIENT_ID = AMEX_CLIENT_ID or getenv(
-        "AMEX_CLIENT_ID", default=json.loads(kvclient.get_secret("amex-clientId").value)["value"], required=True
-    )
-    AMEX_CLIENT_SECRET = AMEX_CLIENT_SECRET or getenv(
-        "AMEX_CLIENT_SECRET", default=json.loads(kvclient.get_secret("amex-clientSecret").value)["value"], required=True
-    )
-
-    try:
-        AMEX_CLIENT_PRIV_KEY_PATH, AMEX_CLIENT_CERT_PATH = _write_tmp_files(
-            json.loads(kvclient.get_secret("amex-cert").value)["key"],
-            json.loads(kvclient.get_secret("amex-cert").value)["cert"],
-        )
-    except ServiceRequestError:
-        logger.error("Could not retrieve cert/key data from vault")
 
 
 REDIS_URL = getenv("REDIS_URL")
