@@ -102,6 +102,8 @@ class MerchantRegApi:
         self, method: str, resource_uri: str, data: dict = None
     ) -> t.Tuple[requests.Response, datetime.datetime]:
         client = self.connect_to_vault()
+        client_cert_path = None
+        client_priv_path = None
         try:
             client_priv_path, client_cert_path = self._write_tmp_files(
                 json.loads(client.get_secret("amex-cert").value)["key"],
