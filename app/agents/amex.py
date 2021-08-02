@@ -20,6 +20,11 @@ from azure.core.exceptions import ServiceRequestError
 from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential
 from tempfile import NamedTemporaryFile
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -101,16 +106,8 @@ class MerchantRegApi:
     def _call_api(
         self, method: str, resource_uri: str, data: dict = None
     ) -> t.Tuple[requests.Response, datetime.datetime]:
-        client = self.connect_to_vault()
-        client_cert_path = None
-        client_priv_path = None
-        try:
-            client_priv_path, client_cert_path = self._write_tmp_files(
-                json.loads(client.get_secret("amex-cert").value)["key"],
-                json.loads(client.get_secret("amex-cert").value)["cert"],
-            )
-        except ServiceRequestError:
-            logger.error("Could not retrieve cert/key data from vault")
+        client_priv_path, client_cert_path = self.load_cert_from_vault()
+
         payload = json.dumps(data)
         headers = self._make_headers(method, resource_uri, payload)
         timestamp = timezone.now()
@@ -159,3 +156,23 @@ class MerchantRegApi:
             raise Exception("Vault Error: settings.KEY_VAULT not set")
 
         return SecretClient(vault_url=settings.KEY_VAULT, credential=DefaultAzureCredential())
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=3, max=12),
+        reraise=True,
+    )
+    def load_cert_from_vault(self) -> t.Tuple[str, ...]:
+        client = self.connect_to_vault()
+        client_cert_path = None
+        client_priv_path = None
+
+        try:
+            client_priv_path, client_cert_path = self._write_tmp_files(
+                json.loads(client.get_secret("amex-cert").value)["key"],
+                json.loads(client.get_secret("amex-cert").value)["cert"],
+            )
+        except ServiceRequestError:
+            logger.error("Could not retrieve cert/key data from vault")
+
+        return client_priv_path, client_cert_path

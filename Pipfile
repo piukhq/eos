@@ -13,6 +13,7 @@ requests = "*"
 rq = "*"
 sentry-sdk = "*"
 authlib = "*"
+tenacity = "*"
 
 [dev-packages]
 coverage = "*"
