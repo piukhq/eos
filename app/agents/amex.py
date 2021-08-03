@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class RetryAdapter(HTTPAdapter):
-    def __init__(self, *args: t.List[t.Any], **kwargs: t.Dict[t.Any, t.Any]) -> None:
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         retries: int = 3
         status_forcelist: t.Tuple = (500, 503, 504)
         retry = Retry(
@@ -162,7 +162,7 @@ class MerchantRegApi:
         wait=wait_exponential(multiplier=1, min=3, max=12),
         reraise=True,
     )
-    def load_cert_from_vault(self) -> t.Tuple[str, ...]:
+    def load_cert_from_vault(self) -> t.Tuple[t.Optional[str], ...]:
         client = self.connect_to_vault()
         client_cert_path = None
         client_priv_path = None
