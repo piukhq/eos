@@ -13,15 +13,16 @@ requests = "*"
 rq = "*"
 sentry-sdk = "*"
 authlib = "*"
+tenacity = "*"
+gunicorn = "*"
 
 [dev-packages]
 coverage = "*"
-black = "*"
+black = "==21.7b0"
 flake8 = "*"
 mypy = "*"
 xenon = "*"
 responses = "*"
 django-stubs = "*"
-
-[pipenv]
-allow_prereleases = true
+types-requests = "*"
+types-redis = "*"

@@ -1,26 +1,25 @@
 stages:
-  - tests
-  - dev
-  - staging
-  - prod
+  - test
+  - build
+  - deploy
 
-tests:
-  stage: tests
-  image: binkhq/python:3.8
-  variables: &variables
-    POSTGRES_DB: eos
-    POSTGRES_HOST_AUTH_METHOD: trust
-    DATABASE_USER: postgres
-    DATABASE_HOST: postgres
-    DATABASE_NAME: eos
-    REDIS_URL: "redis://redis:6379/0"
-    KEY_VAULT: "https://localhost"
-    AMEX_API_HOST: "http://localhost"
-    AMEX_CLIENT_ID: "dummy-amex-client-id"
-    AMEX_CLIENT_SECRET: "dummy-amex-client-secret"
-    SSO_ENABLED: "False"
+variables:
+  POSTGRES_DB: eos
+  POSTGRES_HOST_AUTH_METHOD: trust
+  DATABASE_USER: postgres
+  DATABASE_HOST: postgres
+  DATABASE_NAME: eos
+  REDIS_URL: "redis://redis:6379/0"
+  KEY_VAULT: "https://localhost"
+  AMEX_API_HOST: "http://localhost"
+  AMEX_CLIENT_ID: "dummy-amex-client-id"
+  AMEX_CLIENT_SECRET: "dummy-amex-client-secret"
+  SSO_ENABLED: "False"
+
+test:converge: &test
+  stage: test
+  image: ghcr.io/binkhq/python:3.9
   before_script: &setup
-    - pip install pipenv
     - pipenv install --dev --system --deploy --ignore-pipfile
     - pip freeze
   script:
@@ -30,64 +29,85 @@ tests:
     - postgres:11
     - redis:latest
 
-complexity:
-  stage: tests
-  image: binkhq/python:3.8
-  variables: *variables
+test:complexity:
+  <<: *test
   before_script: *setup
   script:
     - xenon --max-average A --max-modules B --max-absolute B .
 
-style:
-  stage: tests
-  image: binkhq/python:3.8
-  variables: *variables
-  before_script: *setup
+test:style:
+  <<: *test
   script:
-    - flake8 && black --line-length 120 --check .
+    - flake8
+    - black --line-length 120 --check .
 
-type-check:
-  stage: tests
-  image: binkhq/python:3.8
-  variables: *variables
-  before_script: *setup
+test:type-check:
+  <<: *test 
   script:
     - mypy .
 
-dev:
-  stage: dev
-  environment:
-    name: dev
+build:develop: &build
+  stage: build
+  needs: ["test:converge", "test:complexity", "test:style", "test:type-check"]
+  image: docker:latest
+  services:
+    - docker:dind
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - export CTAG=$(echo -n "$CI_PIPELINE_CREATED_AT" | sed s/\://g)
   script:
-    - export CTAG="develop-$(date +%F-%H%M%S)"
-    - docker build --pull -t "$CI_REGISTRY/eos:$CTAG" .
-    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$CI_REGISTRY/aqua-scanner:5.0" scan --local "$CI_REGISTRY/eos:$CTAG" --host https://aqua.uksouth.bink.sh:30001/ --user scanner --password $AQUA_PASSWORD --show-negligible --policies Bink --text
-    - docker push "$CI_REGISTRY/eos:$CTAG"
+    - docker build --pull --tag "$CI_REGISTRY/$CI_PROJECT_NAME:$CTAG" .
+    - docker push "$CI_REGISTRY/$CI_PROJECT_NAME:$CTAG"
   only:
     - develop
 
-staging:
-  stage: staging
-  environment:
-    name: staging
+build:tag:
+  <<: *build
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-  script:
-    - docker build --pull -t "$CI_REGISTRY/eos:staging-$CI_COMMIT_TAG" .
-    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$CI_REGISTRY/aqua-scanner:5.0" scan --local "$CI_REGISTRY/eos:staging-$CI_COMMIT_TAG" --host https://aqua.uksouth.bink.sh:30001/ --user scanner --password $AQUA_PASSWORD --show-negligible --policies Bink --text
-    - docker push "$CI_REGISTRY/eos:staging-$CI_COMMIT_TAG"
+    - export CTAG=$CI_COMMIT_TAG
   only:
     - tags
 
-prod:
-  stage: prod
-  image: binkops.azurecr.io/tagbot:latest
+deploy:dev: &deploy
+  stage: deploy
+  needs: ["build:develop"]
+  image: binkcore.azurecr.io/tagbot:latest
+  environment:
+    name: dev
+  before_script:
+    - export CTAG=$(echo -n "$CI_PIPELINE_CREATED_AT" | sed s/\://g)
+  script:
+    - tagbot
+      --username "$CI_REGISTRY_USER"
+      --password "$CI_REGISTRY_PASSWORD"
+      --source "$CI_REGISTRY/$CI_PROJECT_NAME:$CTAG"
+      --tag "$CI_ENVIRONMENT_NAME-$CTAG"
+    - tagbot
+      --username "$CI_REGISTRY_USER"
+      --password "$CI_REGISTRY_PASSWORD"
+      --source "$CI_REGISTRY/$CI_PROJECT_NAME:$CTAG"
+      --tag "$CI_ENVIRONMENT_NAME"
+  only:
+    - develop
+
+deploy:staging:
+  <<: *deploy
+  needs: ["build:tag"]
+  environment:
+    name: staging
+  before_script:
+    - export CTAG=$CI_COMMIT_TAG
+  only:
+    - tags
+
+deploy:prod:
+  <<: *deploy
+  needs: ["build:tag"]
   environment:
     name: prod
-  script:
-    - tagbot --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" --source "$CI_REGISTRY/eos:staging-$CI_COMMIT_TAG" --tag "prod-$CI_COMMIT_TAG"
+  before_script:
+    - export CTAG=$CI_COMMIT_TAG
   when: manual
   only:
     - tags
