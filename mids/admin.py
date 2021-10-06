@@ -132,7 +132,7 @@ class BatchAdmin(admin.ModelAdmin):
                 buffer.truncate()
                 yield data
 
-        response = StreamingHttpResponse(stream(), content_type="text/csv")
+        response = StreamingHttpResponse(stream(), content_type="text/csv")  # type: ignore
         response["Content-Disposition"] = "attachment; filename=mid_export.csv"
         return response
 
