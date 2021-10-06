@@ -18,6 +18,7 @@ from pathlib import Path
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -106,16 +107,25 @@ WSGI_APPLICATION = "app.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": getenv("DATABASE_NAME", default="eos"),
-        "USER": getenv("DATABASE_USER"),
-        "PASSWORD": getenv("DATABASE_PASSWORD", required=False),
-        "HOST": getenv("DATABASE_HOST", default="127.0.0.1"),
-        "PORT": getenv("DATABASE_PORT", default="5432"),
-    },
-}
+if os.getenv("EOS_DATABASE_URI"):
+    DATABASES = {
+        "default": dj_database_url.config(
+            env="EOS_DATABASE_URI",
+            conn_max_age=600,
+            engine="django.db.backends.postgresql",
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": getenv("DATABASE_NAME", default="eos"),
+            "USER": getenv("DATABASE_USER"),
+            "PASSWORD": getenv("DATABASE_PASSWORD", required=False),
+            "HOST": getenv("DATABASE_HOST", default="127.0.0.1"),
+            "PORT": getenv("DATABASE_PORT", default="5432"),
+        },
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
