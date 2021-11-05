@@ -1,0 +1,93 @@
+name: ci
+
+on:
+  push:
+    branches: [ develop, master ]
+  pull_request:
+    branches: [ develop, master ]
+  release:
+    types: [ published ]
+
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_USER: postgres
+      DATABASE_HOST: "127.0.0.1"
+      DATABASE_NAME: eos
+      REDIS_URL: "redis://127.0.0.1:6379/0"
+      KEY_VAULT: "https://localhost"
+      AMEX_API_HOST: "http://localhost"
+      AMEX_CLIENT_ID: "dummy-amex-client-id"
+      AMEX_CLIENT_SECRET: "dummy-amex-client-secret"
+      SSO_ENABLED: "False"
+    services:
+      postgres:
+        image: postgres:latest
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: eos
+          POSTGRES_HOST_AUTH_METHOD: trust
+      redis:
+        image: redis:latest
+        ports: 
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - run: pip install pipenv
+      - run: pipenv install --dev --system --deploy --ignore-pipfile
+      - run: coverage run manage.py test -v 2 && coverage report
+      - run: xenon --max-average A --max-modules B --max-absolute B .
+      - run: mypy .
+      - run: flake8 .
+      - run: black --line-length=120 --check .
+      - run: isort --check --line-length 120 --profile black .
+  create_dev_release:
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    name: create_dev_release
+    runs-on: ubuntu-latest
+    needs: [ tests ]
+    steps:
+      - uses: actions/checkout@v2
+      - run: echo "::set-output name=date::$(date +'%FT%H%M%SZ')"
+        id: date
+      - uses: docker/login-action@v1
+        with:
+          registry: binkcore.azurecr.io
+          username: binkcore
+          password: ${{ secrets.ACR_BINKCORE_PASSWORD }}
+      - uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: |
+            binkcore.azurecr.io/eos:${{ steps.date.outputs.date }}
+            binkcore.azurecr.io/eos:latest
+  create_tag_release:
+    if: github.event_name == 'release' && github.event.action == 'published'
+    name: create_tag_release
+    runs-on: ubuntu-latest
+    needs: [ tests ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: tag_check
+        run: |
+          if ! [[ ${{ github.event.release.tag_name }} =~ [0-9]+.[0-9]+.[0-9]+ ]]; then
+            exit 1;
+          fi
+      - uses: docker/login-action@v1
+        with:
+          registry: binkcore.azurecr.io
+          username: binkcore
+          password: ${{ secrets.ACR_BINKCORE_PASSWORD }}
+      - uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: |
+            binkcore.azurecr.io/eos:${{ github.event.release.tag_name }}
+            binkcore.azurecr.io/eos:staging-${{ github.event.release.tag_name }}
+            binkcore.azurecr.io/eos:staging
