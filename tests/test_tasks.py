@@ -1,9 +1,9 @@
 from datetime import date
 from unittest import mock
-from django.test import TestCase, override_settings
-from django.utils import timezone
 
 import responses
+from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from app import tasks
 from mids.models import Batch, BatchItem, BatchItemAction, BatchItemStatus

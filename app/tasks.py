@@ -1,15 +1,13 @@
 import logging
 import typing as t
-
 from datetime import date
 
+import rq
 from django.conf import settings
 from django.db import transaction
-
-import rq
-from app.agents.amex import MerchantRegApi
 from redis import Redis
 
+from app.agents.amex import MerchantRegApi
 from mids.models import BatchItem, BatchItemAction, BatchItemStatus
 
 logger = logging.getLogger(__name__)

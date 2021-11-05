@@ -2,11 +2,9 @@ import logging
 import typing as t
 
 import rq
-
 from django.core.management.base import BaseCommand
 
-from app.tasks import task_queue, redis
-
+from app.tasks import redis, task_queue
 
 logger = logging.getLogger(__name__)
 

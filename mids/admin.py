@@ -5,7 +5,6 @@ import typing as t
 from datetime import date, datetime
 
 import rq
-
 from django import forms
 from django.conf import settings
 from django.contrib import admin, messages

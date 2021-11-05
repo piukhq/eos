@@ -7,24 +7,18 @@ import logging
 import time
 import typing as t
 import uuid
+from tempfile import NamedTemporaryFile
+from urllib.parse import urlsplit
 
 import requests
-
+from azure.core.exceptions import ServiceRequestError
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 from django.conf import settings
 from django.utils import timezone
-
 from requests.adapters import HTTPAdapter
-from urllib.parse import urlsplit
+from tenacity import retry, stop_after_attempt, wait_exponential
 from urllib3.util.retry import Retry
-from azure.core.exceptions import ServiceRequestError
-from azure.keyvault.secrets import SecretClient
-from azure.identity import DefaultAzureCredential
-from tempfile import NamedTemporaryFile
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-)
 
 logger = logging.getLogger(__name__)
 

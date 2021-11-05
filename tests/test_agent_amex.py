@@ -1,12 +1,12 @@
 import json
-import responses
 import uuid
 from datetime import date, timedelta
 from unittest import mock
 
+import responses
 from django.test import TestCase, override_settings
 
-from app.agents.amex import MerchantRegApi, BASE_URI
+from app.agents.amex import BASE_URI, MerchantRegApi
 
 AMEX_API_HOST = "http://localhost"
 AMEX_CLIENT_SECRET = "shhhhhh"

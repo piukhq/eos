@@ -1,8 +1,9 @@
 from datetime import date
+
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http.response import HttpResponse
 from django.test import Client, TestCase
-from django.contrib.auth.models import User
 from django.urls import reverse
 
 from app.tasks import task_queue
