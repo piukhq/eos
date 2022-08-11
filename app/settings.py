@@ -106,12 +106,15 @@ WSGI_APPLICATION = "app.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+PG_OPTIONS = {"application_name": "eos"}
+
 if os.getenv("EOS_DATABASE_URI"):
     DATABASES = {
         "default": dj_database_url.config(
             env="EOS_DATABASE_URI",
             conn_max_age=600,
             engine="django.db.backends.postgresql",
+            options=PG_OPTIONS,
         )
     }
 else:
@@ -123,6 +126,7 @@ else:
             "PASSWORD": getenv("DATABASE_PASSWORD", required=False),
             "HOST": getenv("DATABASE_HOST", default="127.0.0.1"),
             "PORT": getenv("DATABASE_PORT", default="5432"),
+            "OPTIONS": PG_OPTIONS,
         },
     }
 
