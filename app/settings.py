@@ -114,7 +114,6 @@ if os.getenv("EOS_DATABASE_URI"):
             env="EOS_DATABASE_URI",
             conn_max_age=600,
             engine="django.db.backends.postgresql",
-            options=PG_OPTIONS,
         )
     }
 else:
