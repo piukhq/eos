@@ -19,7 +19,7 @@ dj-database-url = "*"
 
 [dev-packages]
 coverage = "*"
-black = "==21.10b0"
+black = "*"
 flake8 = "*"
 mypy = "*"
 xenon = "*"
