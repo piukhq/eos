@@ -58,7 +58,7 @@ SECRET_KEY = "=@%7ks9yhdz^n-qa5-w%8nl0)p6064=yc6)dpfoljxu9gqd5t%"
 DEBUG = getenv("DEBUG", "False", conv=boolconv)
 
 ALLOWED_HOSTS = ["*"]
-CSRF_TRUSTED_ORIGINS = ["127.0.0.1", ".bink.com"]
+CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1", "https://*.bink.com"]
 
 # Application definition
 
