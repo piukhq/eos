@@ -32,11 +32,15 @@ class ConfigVarRequiredError(Exception):
     pass
 
 
-def getenv(key: str, default: str = None, conv: t.Callable = str, required: bool = True) -> t.Any:
+def getenv(
+    key: str, default: str = None, conv: t.Callable = str, required: bool = True
+) -> t.Any:
     """If `default` is None, then the var is non-optional."""
     var = os.getenv(key, default)
     if var is None and required is True:
-        raise ConfigVarRequiredError(f"Configuration variable '{key}' is required but was not provided.")
+        raise ConfigVarRequiredError(
+            f"Configuration variable '{key}' is required but was not provided."
+        )
     elif var is not None:
         return conv(var)
     else:
@@ -58,7 +62,13 @@ SECRET_KEY = "=@%7ks9yhdz^n-qa5-w%8nl0)p6064=yc6)dpfoljxu9gqd5t%"
 DEBUG = getenv("DEBUG", "False", conv=boolconv)
 
 ALLOWED_HOSTS = ["*"]
-CSRF_TRUSTED_ORIGINS = ["127.0.0.1", ".bink.com"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1",
+    "https://*.bink.com",
+]
+
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # Application definition
 
@@ -154,7 +164,6 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "en-gb"
 TIME_ZONE = "UTC"
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
@@ -170,7 +179,9 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {"format": "%(asctime)s :: %(name)s :: %(levelname)s :: %(message)s"},
+        "verbose": {
+            "format": "%(asctime)s :: %(name)s :: %(levelname)s :: %(message)s"
+        },
     },
     "handlers": {
         "console": {
@@ -239,7 +250,9 @@ OAUTH_TENANT_ID = getenv("OAUTH_TENANT_ID", required=SSO_ENABLED)
 OAUTH_CLIENT_ID = getenv("OAUTH_CLIENT_ID", required=SSO_ENABLED)
 OAUTH_CLIENT_SECRET = getenv("OAUTH_CLIENT_SECRET", required=SSO_ENABLED)
 OAUTH_REDIRECT_URI = getenv(
-    "OAUTH_REDIRECT_URI", required=SSO_ENABLED, default="http://localhost:9000/eos/admin/oidc/callback/"
+    "OAUTH_REDIRECT_URI",
+    required=SSO_ENABLED,
+    default="http://localhost:9000/eos/admin/oidc/callback/",
 )
 
 # if SSO is disabled, we use Django's default auth backend
