@@ -56,9 +56,7 @@ class TestTasks(TestCase):
                 timezone.now(),
             )
             tasks.process_item(self.item.id)
-            mock_api.add_merchant.assert_called_with(
-                "123456789", "wasabi-club", self.start, self.end
-            )
+            mock_api.add_merchant.assert_called_with("123456789", "wasabi-club", self.start, self.end)
         self.item.refresh_from_db()
         self.assertEqual(self.item.status, BatchItemStatus.DONE)
         self.assertEqual(self.item.response, {"some": "json"})
@@ -77,9 +75,7 @@ class TestTasks(TestCase):
                 timezone.now(),
             )
             tasks.process_item(self.item.id)
-            mock_api.add_merchant.assert_called_with(
-                "123456789", "wasabi-club", self.start, self.end
-            )
+            mock_api.add_merchant.assert_called_with("123456789", "wasabi-club", self.start, self.end)
         self.item.refresh_from_db()
         self.assertEqual(self.item.status, BatchItemStatus.ERROR)
         self.assertEqual(self.item.error_code, "1040012")

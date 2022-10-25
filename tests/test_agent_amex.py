@@ -23,14 +23,10 @@ class TestAmexAgent(TestCase):
         self.amex = MerchantRegApi()
         self.mid = "4548436161"
 
-    @mock.patch(
-        "uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}")
-    )
+    @mock.patch("uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}"))
     @mock.patch("time.time", new=lambda: 1613218482.810827)
     def test__make_headers(self) -> None:
-        headers = MerchantRegApi()._make_headers(
-            "POST", "/a/test/uri", '{"payload": "data"}'
-        )
+        headers = MerchantRegApi()._make_headers("POST", "/a/test/uri", '{"payload": "data"}')
         self.assertEqual(
             headers,
             {
@@ -43,9 +39,7 @@ class TestAmexAgent(TestCase):
             },
         )
 
-    @mock.patch(
-        "uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}")
-    )
+    @mock.patch("uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}"))
     @responses.activate
     def test_add_merchant(self) -> None:
         responses.add(
@@ -94,9 +88,7 @@ class TestAmexAgent(TestCase):
             },
         )
 
-    @mock.patch(
-        "uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}")
-    )
+    @mock.patch("uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}"))
     @responses.activate
     def test_delete_merchant(self) -> None:
         responses.add(

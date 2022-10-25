@@ -25,9 +25,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "file_name",
-                    models.CharField(
-                        help_text="The name of the uploaded file", max_length=250
-                    ),
+                    models.CharField(help_text="The name of the uploaded file", max_length=250),
                 ),
                 ("time_uploaded", models.DateTimeField(auto_now_add=True)),
             ],
@@ -66,9 +64,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "action",
-                    models.CharField(
-                        choices=[("A", "Add"), ("D", "Delete")], max_length=1
-                    ),
+                    models.CharField(choices=[("A", "Add"), ("D", "Delete")], max_length=1),
                 ),
                 ("created", models.DateTimeField(auto_now_add=True)),
                 ("updated", models.DateTimeField(auto_now=True)),
@@ -79,9 +75,7 @@ class Migration(migrations.Migration):
                 ("response", models.JSONField(null=True, blank=True)),
                 (
                     "batch",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="mids.batch"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="mids.batch"),
                 ),
             ],
             options={"ordering": ["id"]},

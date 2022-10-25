@@ -4,9 +4,7 @@ from django.db import models
 
 
 class Batch(models.Model):
-    file_name = models.CharField(
-        max_length=250, help_text="The name of the uploaded file"
-    )
+    file_name = models.CharField(max_length=250, help_text="The name of the uploaded file")
     time_uploaded = models.DateTimeField(auto_now_add=True)
     sender_name = models.CharField(max_length=50, blank=True)
     date_sent = models.DateTimeField(null=True, blank=True)
