@@ -8,6 +8,7 @@ import rq
 from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
+from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
@@ -232,7 +233,7 @@ class BatchAdmin(admin.ModelAdmin):
         if request.method == "POST":
             form = FileUploadForm(request.POST, request.FILES)
             if form.is_valid():
-                file = request.FILES["input_file"]
+                file = t.cast(UploadedFile, request.FILES["input_file"])
                 try:
                     reader = csv.DictReader(file.read().decode().splitlines())
                 except UnicodeDecodeError:
@@ -248,7 +249,7 @@ class BatchAdmin(admin.ModelAdmin):
 
                 if not errors:
                     with transaction.atomic():
-                        batch = Batch.objects.create(file_name=file.name)
+                        batch = Batch.objects.create(file_name=file.name or "filename.csv")
                         BatchItem.objects.bulk_create(
                             [BatchItem(batch=batch, status=BatchItemStatus.PENDING, **row) for row in typed_rows]
                         )

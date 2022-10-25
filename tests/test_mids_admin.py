@@ -19,7 +19,7 @@ class TestMidsAdmin(TestCase):
         batch_file = SimpleUploadedFile(file_name, file_content, content_type="text/csv")
         self.client.login(username="admin", password="!Potato12345!")
         response = self.client.post(reverse("admin:mids_batch_add"), {"input_file": batch_file}, follow=True)
-        return response
+        return response #type: ignore
 
     def test_file_ext(self) -> None:
         file_content = b"""mid,start_date,end_date,merchant_slug,provider_slug,action

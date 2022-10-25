@@ -69,8 +69,13 @@ class MerchantRegApi:
             client_secret = settings.AMEX_CLIENT_SECRET
         else:
             client = self.connect_to_vault()
-            client_id = json.loads(client.get_secret("amex-clientId").value)["value"]
-            client_secret = json.loads(client.get_secret("amex-clientSecret").value)["value"]
+            client_id = client.get_secret("amex-clientId").value
+            client_secret = client.get_secret("amex-clientSecret").value
+            if client_id and client_secret:
+                client_id = json.loads(client_id)["value"]
+                client_secret = json.loads(client_secret)["value"]
+            else:
+                raise ValueError
         return client_id, client_secret
 
     def _make_headers(self, httpmethod: str, resource_uri: str, payload: str) -> dict:
@@ -162,10 +167,16 @@ class MerchantRegApi:
         client_priv_path = None
 
         try:
-            client_priv_path, client_cert_path = self._write_tmp_files(
-                json.loads(client.get_secret("amex-cert").value)["key"],
-                json.loads(client.get_secret("amex-cert").value)["cert"],
-            )
+            amex_cert = client.get_secret("amex-cert").value
+
+            if amex_cert:
+                client_priv_path, client_cert_path = self._write_tmp_files(
+                    json.loads(amex_cert)["key"],
+                    json.loads(amex_cert)["cert"],
+                )
+            else:
+                raise ValueError
+
         except ServiceRequestError:
             logger.error("Could not retrieve cert/key data from vault")
 
