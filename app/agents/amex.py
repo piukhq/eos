@@ -84,7 +84,9 @@ class MerchantRegApi:
         client_id, client_secret = self.client_id_and_secret()
 
         bodyhash = base64.b64encode(
-            hmac.new(client_secret.encode(), payload.encode(), digestmod=hashlib.sha256).digest()
+            hmac.new(
+                client_secret.encode(), payload.encode(), digestmod=hashlib.sha256
+            ).digest()
         ).decode()
 
         hash_key_secret = (
@@ -92,7 +94,11 @@ class MerchantRegApi:
             f"{resource_uri}\n{urlsplit(settings.AMEX_API_HOST).netloc}\n443\n{bodyhash}\n"
         )
         mac = base64.b64encode(
-            hmac.new(client_secret.encode(), hash_key_secret.encode(), digestmod=hashlib.sha256).digest()
+            hmac.new(
+                client_secret.encode(),
+                hash_key_secret.encode(),
+                digestmod=hashlib.sha256,
+            ).digest()
         ).decode()
 
         return {
@@ -120,7 +126,11 @@ class MerchantRegApi:
         return response, timestamp
 
     def add_merchant(
-        self, mid: str, merchant_slug: str, start_date: datetime.date, end_date: datetime.date
+        self,
+        mid: str,
+        merchant_slug: str,
+        start_date: datetime.date,
+        end_date: datetime.date,
     ) -> t.Tuple[requests.Response, datetime.datetime]:
         data = self.COMMON_PARAMS.copy()
         data.update(
@@ -138,7 +148,9 @@ class MerchantRegApi:
         )
         return self._call_api("POST", BASE_URI, data)
 
-    def delete_merchant(self, mid: str, merchant_slug: str) -> t.Tuple[requests.Response, datetime.datetime]:
+    def delete_merchant(
+        self, mid: str, merchant_slug: str
+    ) -> t.Tuple[requests.Response, datetime.datetime]:
         data = self.COMMON_PARAMS.copy()
         data.update(
             {
@@ -154,7 +166,9 @@ class MerchantRegApi:
         if settings.KEY_VAULT is None:
             raise Exception("Vault Error: settings.KEY_VAULT not set")
 
-        return SecretClient(vault_url=settings.KEY_VAULT, credential=DefaultAzureCredential())
+        return SecretClient(
+            vault_url=settings.KEY_VAULT, credential=DefaultAzureCredential()
+        )
 
     @retry(
         stop=stop_after_attempt(3),

@@ -39,33 +39,50 @@ class FileUploadForm(forms.Form):
         return file
 
 
-def queue_batches(batches: QuerySet, user_name: str) -> t.Tuple[t.List[int], t.List[int]]:
+def queue_batches(
+    batches: QuerySet, user_name: str
+) -> t.Tuple[t.List[int], t.List[int]]:
     queued, errors = [], []
     for batch in batches:
         with transaction.atomic():
             batch.sender_name = user_name
             batch.date_sent = datetime.now()
             logger.info(f"Queuing items from batch {batch.file_name}")
-            for item in batch.batchitem_set.select_for_update().filter(status=BatchItemStatus.PENDING):
+            for item in batch.batchitem_set.select_for_update().filter(
+                status=BatchItemStatus.PENDING
+            ):
                 try:
-                    tasks.task_queue.enqueue(tasks.process_item, item.id, retry=rq.Retry(max=1, interval=[10, 30, 60]))
+                    tasks.task_queue.enqueue(
+                        tasks.process_item,
+                        item.id,
+                        retry=rq.Retry(max=1, interval=[10, 30, 60]),
+                    )
                     queued.append(item.id)
                 except RedisError:
                     errors.append(item.id)
-            batch.batchitem_set.filter(id__in=queued).update(status=BatchItemStatus.QUEUED)
+            batch.batchitem_set.filter(id__in=queued).update(
+                status=BatchItemStatus.QUEUED
+            )
             batch.save()
         logger.info(f"Queued {len(queued)} items from batch {batch.file_name}")
     return queued, errors
 
 
-def queue_batches_action(modeladmin: admin.ModelAdmin, request: HttpRequest, queryset: QuerySet) -> None:
+def queue_batches_action(
+    modeladmin: admin.ModelAdmin, request: HttpRequest, queryset: QuerySet
+) -> None:
     queued, errors = queue_batches(queryset, request.user.get_username())
     if queued:
         messages.info(request, "Queued {} items".format(len(queued)))
     else:
-        messages.warning(request, "No items queued. Perhaps none in the batch were PENDING")
+        messages.warning(
+            request, "No items queued. Perhaps none in the batch were PENDING"
+        )
     if errors:
-        messages.warning(request, "{} items were not queued due to an error with redis".format(len(errors)))
+        messages.warning(
+            request,
+            "{} items were not queued due to an error with redis".format(len(errors)),
+        )
 
 
 queue_batches_action.short_description = "Process batches"  # type:ignore
@@ -82,7 +99,14 @@ class TypedRow(t.TypedDict):
 
 @admin.register(Batch)
 class BatchAdmin(admin.ModelAdmin):
-    list_display = ["batch_filter_link", "time_uploaded", "export_link", "processed", "sender_name", "date_sent"]
+    list_display = [
+        "batch_filter_link",
+        "time_uploaded",
+        "export_link",
+        "processed",
+        "sender_name",
+        "date_sent",
+    ]
     fields = readonly_fields = ["file_name", "time_uploaded"]
     actions = [queue_batches_action]
 
@@ -91,10 +115,16 @@ class BatchAdmin(admin.ModelAdmin):
 
     def get_urls(self) -> t.List[URLPattern]:
         return [
-            path("<int:batch_id>/export/", admin.site.admin_view(self.export_as_csv), name="export_as_csv")
+            path(
+                "<int:batch_id>/export/",
+                admin.site.admin_view(self.export_as_csv),
+                name="export_as_csv",
+            )
         ] + super().get_urls()
 
-    def export_as_csv(self, request: HttpRequest, batch_id: int) -> StreamingHttpResponse:
+    def export_as_csv(
+        self, request: HttpRequest, batch_id: int
+    ) -> StreamingHttpResponse:
         field_names = [
             "mid",
             "start_date",
@@ -124,7 +154,11 @@ class BatchAdmin(admin.ModelAdmin):
             batch = Batch.objects.prefetch_related("batchitem_set").get(id=batch_id)
             for item in batch.batchitem_set.all():
                 writer.writerow(
-                    [batch.file_name] + [conv_map.get(field, getattr)(item, field) for field in field_names]
+                    [batch.file_name]
+                    + [
+                        conv_map.get(field, getattr)(item, field)
+                        for field in field_names
+                    ]
                 )
                 buffer.seek(0)
                 data = buffer.read()
@@ -146,14 +180,25 @@ class BatchAdmin(admin.ModelAdmin):
     processed.boolean = True  # type:ignore
 
     def batch_filter_link(self, obj: Batch) -> SafeText:
-        url = reverse("admin:mids_batchitem_changelist") + "?" + urlencode({"batch__id": f"{obj.id}"})
+        url = (
+            reverse("admin:mids_batchitem_changelist")
+            + "?"
+            + urlencode({"batch__id": f"{obj.id}"})
+        )
         return format_html('<a href="{}">{}</a>', url, obj.file_name)
 
     def export_link(self, obj: Batch) -> SafeText:
         url = reverse("admin:export_as_csv", args=[obj.id])
         return format_html('<a href="{}">Export</a>', url)
 
-    REQUIRED_COLUMNS = ["mid", "start_date", "end_date", "merchant_slug", "provider_slug", "action"]
+    REQUIRED_COLUMNS = [
+        "mid",
+        "start_date",
+        "end_date",
+        "merchant_slug",
+        "provider_slug",
+        "action",
+    ]
     PROVIDERS = ["amex"]
 
     def validate_headers(
@@ -164,7 +209,9 @@ class BatchAdmin(admin.ModelAdmin):
         missing = list(required_columns - fieldnames) or None
         return extra, missing
 
-    def _validate_action(self, row: t.Dict[str, str], typed_row: TypedRow) -> t.List[str]:
+    def _validate_action(
+        self, row: t.Dict[str, str], typed_row: TypedRow
+    ) -> t.List[str]:
         errors = []
 
         try:
@@ -177,12 +224,16 @@ class BatchAdmin(admin.ModelAdmin):
                     try:
                         typed_row[field] = datetime.strptime(row[field].strip(), "%Y-%m-%d")  # type: ignore
                     except ValueError:
-                        errors.append(f"Invalid {field}: {row[field].strip() or '<empty>'}")
+                        errors.append(
+                            f"Invalid {field}: {row[field].strip() or '<empty>'}"
+                        )
             else:
                 typed_row["start_date"] = typed_row["end_date"] = None
         return errors
 
-    def _validate_row(self, row: t.Dict[str, str]) -> t.Tuple[t.Optional[TypedRow], t.List[str]]:
+    def _validate_row(
+        self, row: t.Dict[str, str]
+    ) -> t.Tuple[t.Optional[TypedRow], t.List[str]]:
         errors = []
         if any(row.get(field) is None for field in self.REQUIRED_COLUMNS):
             errors.append("Missing row values")
@@ -212,10 +263,14 @@ class BatchAdmin(admin.ModelAdmin):
             and typed_row["end_date"] is not None
             and typed_row["start_date"] >= typed_row["end_date"]
         ):
-            errors.append(f"Start date ({row['start_date']}) >= end date ({row['end_date']})")
+            errors.append(
+                f"Start date ({row['start_date']}) >= end date ({row['end_date']})"
+            )
         return typed_row, errors
 
-    def _process_rows(self, reader: csv.DictReader) -> t.Tuple[t.List[TypedRow], t.Dict[str, t.List[str]]]:
+    def _process_rows(
+        self, reader: csv.DictReader
+    ) -> t.Tuple[t.List[TypedRow], t.Dict[str, t.List[str]]]:
         errors = {}
         typed_rows: t.List[TypedRow] = []
         for row in reader:
@@ -227,7 +282,10 @@ class BatchAdmin(admin.ModelAdmin):
         return typed_rows, errors
 
     def add_view(
-        self, request: HttpRequest, form_url: str = "", extra_context: t.Optional[t.Dict] = None
+        self,
+        request: HttpRequest,
+        form_url: str = "",
+        extra_context: t.Optional[t.Dict] = None,
     ) -> HttpResponse:
         errors = None
         if request.method == "POST":
@@ -240,18 +298,30 @@ class BatchAdmin(admin.ModelAdmin):
                     messages.error(request, "Invalid file format")
                     return redirect(reverse("admin:mids_batch_add"))
 
-                extra, missing = self.validate_headers(request, set(reader.fieldnames or []))
+                extra, missing = self.validate_headers(
+                    request, set(reader.fieldnames or [])
+                )
                 if extra or missing:
-                    messages.error(request, f"Required column headers: {', '.join(self.REQUIRED_COLUMNS)}")
+                    messages.error(
+                        request,
+                        f"Required column headers: {', '.join(self.REQUIRED_COLUMNS)}",
+                    )
                     return redirect(reverse("admin:mids_batch_add"))
 
                 typed_rows, errors = self._process_rows(reader)
 
                 if not errors:
                     with transaction.atomic():
-                        batch = Batch.objects.create(file_name=file.name or "filename.csv")
+                        batch = Batch.objects.create(
+                            file_name=file.name or "filename.csv"
+                        )
                         BatchItem.objects.bulk_create(
-                            [BatchItem(batch=batch, status=BatchItemStatus.PENDING, **row) for row in typed_rows]
+                            [
+                                BatchItem(
+                                    batch=batch, status=BatchItemStatus.PENDING, **row
+                                )
+                                for row in typed_rows
+                            ]
                         )
 
                     messages.success(request, "Batch imported")
@@ -263,7 +333,12 @@ class BatchAdmin(admin.ModelAdmin):
         return TemplateResponse(
             request,
             "admin/upload.html",
-            {"form": form, "file_errors": errors, "title": "Upload batch", "site_header": settings.SITE_HEADER},
+            {
+                "form": form,
+                "file_errors": errors,
+                "title": "Upload batch",
+                "site_header": settings.SITE_HEADER,
+            },
         )
 
 

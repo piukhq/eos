@@ -34,12 +34,21 @@ def process_item(item_id: int) -> None:
         api = MerchantRegApi()
         if item.action == BatchItemAction.ADD:
             response, request_timestamp = api.add_merchant(
-                item.mid, item.merchant_slug, t.cast(date, item.start_date), t.cast(date, item.end_date)
+                item.mid,
+                item.merchant_slug,
+                t.cast(date, item.start_date),
+                t.cast(date, item.end_date),
             )
         elif item.action == BatchItemAction.DELETE:
-            response, request_timestamp = api.delete_merchant(item.mid, item.merchant_slug)
+            response, request_timestamp = api.delete_merchant(
+                item.mid, item.merchant_slug
+            )
         else:
-            logger.warning("Item with id {} has unrecognised action ({})".format(item.id, item.action))
+            logger.warning(
+                "Item with id {} has unrecognised action ({})".format(
+                    item.id, item.action
+                )
+            )
             item.status = BatchItemStatus.ERROR
             item.save(update_fields=["status"])
             return
@@ -59,4 +68,6 @@ def process_item(item_id: int) -> None:
         else:
             update_fields = []
             item.status = BatchItemStatus.DONE
-        item.save(update_fields=update_fields + ["status", "response", "request_timestamp"])
+        item.save(
+            update_fields=update_fields + ["status", "response", "request_timestamp"]
+        )

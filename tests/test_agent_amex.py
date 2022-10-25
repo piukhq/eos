@@ -13,16 +13,24 @@ AMEX_CLIENT_SECRET = "shhhhhh"
 AMEX_CLIENT_ID = "client-id"
 
 
-@override_settings(AMEX_API_HOST=AMEX_API_HOST, AMEX_CLIENT_SECRET=AMEX_CLIENT_SECRET, AMEX_CLIENT_ID=AMEX_CLIENT_ID)
+@override_settings(
+    AMEX_API_HOST=AMEX_API_HOST,
+    AMEX_CLIENT_SECRET=AMEX_CLIENT_SECRET,
+    AMEX_CLIENT_ID=AMEX_CLIENT_ID,
+)
 class TestAmexAgent(TestCase):
     def setUp(self) -> None:
         self.amex = MerchantRegApi()
         self.mid = "4548436161"
 
-    @mock.patch("uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}"))
+    @mock.patch(
+        "uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}")
+    )
     @mock.patch("time.time", new=lambda: 1613218482.810827)
     def test__make_headers(self) -> None:
-        headers = MerchantRegApi()._make_headers("POST", "/a/test/uri", '{"payload": "data"}')
+        headers = MerchantRegApi()._make_headers(
+            "POST", "/a/test/uri", '{"payload": "data"}'
+        )
         self.assertEqual(
             headers,
             {
@@ -35,7 +43,9 @@ class TestAmexAgent(TestCase):
             },
         )
 
-    @mock.patch("uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}"))
+    @mock.patch(
+        "uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}")
+    )
     @responses.activate
     def test_add_merchant(self) -> None:
         responses.add(
@@ -84,13 +94,18 @@ class TestAmexAgent(TestCase):
             },
         )
 
-    @mock.patch("uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}"))
+    @mock.patch(
+        "uuid.uuid4", new=lambda: uuid.UUID("{12345678-1234-5678-1234-567812345678}")
+    )
     @responses.activate
     def test_delete_merchant(self) -> None:
         responses.add(
             responses.DELETE,
             AMEX_API_HOST + BASE_URI + f"/{self.mid}",
-            json={"correlationId": "52b0666f-3dfa-4e8f-b16f-d6737aa3efe8", "merchantId": self.mid},
+            json={
+                "correlationId": "52b0666f-3dfa-4e8f-b16f-d6737aa3efe8",
+                "merchantId": self.mid,
+            },
             status=200,
             content_type="application/json",
         )

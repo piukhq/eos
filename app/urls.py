@@ -26,7 +26,11 @@ URL = Union[URLPattern, URLResolver]
 
 urlpatterns: list[URL] = [
     path("livez", view=livez, name="livez"),
-    re_path(r"^eos/static/(?P<path>.*)$", serve, kwargs={"document_root": settings.STATIC_ROOT}),
+    re_path(
+        r"^eos/static/(?P<path>.*)$",
+        serve,
+        kwargs={"document_root": settings.STATIC_ROOT},
+    ),
 ]
 if settings.SSO_ENABLED:
     urlpatterns.extend(

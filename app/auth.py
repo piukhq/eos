@@ -6,7 +6,9 @@ from django.http import HttpRequest
 
 
 class AutoUserCreationBackend(ModelBackend):
-    def authenticate(self, request: HttpRequest, username: str) -> models.User:  # type:ignore
+    def authenticate(
+        self, request: HttpRequest, username: str
+    ) -> models.User:  # type:ignore
         User = get_user_model()
 
         try:
