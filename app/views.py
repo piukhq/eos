@@ -1,9 +1,8 @@
 from authlib.integrations.django_client import OAuth
-from django.contrib.auth import authenticate, login
-from django.http import HttpResponse
-from django.shortcuts import redirect
 from django.conf import settings
-from django.http import HttpRequest, JsonResponse
+from django.contrib.auth import authenticate, login
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import redirect
 
 TENANT_ID = settings.OAUTH_TENANT_ID
 oauth = OAuth()

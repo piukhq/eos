@@ -1,15 +1,13 @@
 import logging
 import typing as t
-
 from datetime import date
 
+import rq
 from django.conf import settings
 from django.db import transaction
-
-import rq
-from app.agents.amex import MerchantRegApi
 from redis import Redis
 
+from app.agents.amex import MerchantRegApi
 from mids.models import BatchItem, BatchItemAction, BatchItemStatus
 
 logger = logging.getLogger(__name__)
@@ -36,7 +34,10 @@ def process_item(item_id: int) -> None:
         api = MerchantRegApi()
         if item.action == BatchItemAction.ADD:
             response, request_timestamp = api.add_merchant(
-                item.mid, item.merchant_slug, t.cast(date, item.start_date), t.cast(date, item.end_date)
+                item.mid,
+                item.merchant_slug,
+                t.cast(date, item.start_date),
+                t.cast(date, item.end_date),
             )
         elif item.action == BatchItemAction.DELETE:
             response, request_timestamp = api.delete_merchant(item.mid, item.merchant_slug)

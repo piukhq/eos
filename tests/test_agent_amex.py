@@ -1,19 +1,23 @@
 import json
-import responses
 import uuid
 from datetime import date, timedelta
 from unittest import mock
 
+import responses
 from django.test import TestCase, override_settings
 
-from app.agents.amex import MerchantRegApi, BASE_URI
+from app.agents.amex import BASE_URI, MerchantRegApi
 
 AMEX_API_HOST = "http://localhost"
 AMEX_CLIENT_SECRET = "shhhhhh"
 AMEX_CLIENT_ID = "client-id"
 
 
-@override_settings(AMEX_API_HOST=AMEX_API_HOST, AMEX_CLIENT_SECRET=AMEX_CLIENT_SECRET, AMEX_CLIENT_ID=AMEX_CLIENT_ID)
+@override_settings(
+    AMEX_API_HOST=AMEX_API_HOST,
+    AMEX_CLIENT_SECRET=AMEX_CLIENT_SECRET,
+    AMEX_CLIENT_ID=AMEX_CLIENT_ID,
+)
 class TestAmexAgent(TestCase):
     def setUp(self) -> None:
         self.amex = MerchantRegApi()
@@ -90,7 +94,10 @@ class TestAmexAgent(TestCase):
         responses.add(
             responses.DELETE,
             AMEX_API_HOST + BASE_URI + f"/{self.mid}",
-            json={"correlationId": "52b0666f-3dfa-4e8f-b16f-d6737aa3efe8", "merchantId": self.mid},
+            json={
+                "correlationId": "52b0666f-3dfa-4e8f-b16f-d6737aa3efe8",
+                "merchantId": self.mid,
+            },
             status=200,
             content_type="application/json",
         )

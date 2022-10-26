@@ -14,17 +14,23 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from typing import Union
+
 from django.conf import settings
 from django.contrib import admin
-from django.urls import path, re_path, URLResolver, URLPattern
+from django.urls import URLPattern, URLResolver, path, re_path
 from django.views.static import serve
-from .views import livez, oauth_login, oauth_callback
+
+from .views import livez, oauth_callback, oauth_login
 
 URL = Union[URLPattern, URLResolver]
 
 urlpatterns: list[URL] = [
     path("livez", view=livez, name="livez"),
-    re_path(r"^eos/static/(?P<path>.*)$", serve, kwargs={"document_root": settings.STATIC_ROOT}),
+    re_path(
+        r"^eos/static/(?P<path>.*)$",
+        serve,
+        kwargs={"document_root": settings.STATIC_ROOT},
+    ),
 ]
 if settings.SSO_ENABLED:
     urlpatterns.extend(

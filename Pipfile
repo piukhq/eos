@@ -19,7 +19,7 @@ dj-database-url = "*"
 
 [dev-packages]
 coverage = "*"
-black = "==21.8b0"
+black = "*"
 flake8 = "*"
 mypy = "*"
 xenon = "*"
@@ -29,3 +29,4 @@ types-requests = "*"
 types-redis = "*"
 pytest = "*"
 ptpython = "*"
+isort = "*"

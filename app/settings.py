@@ -15,10 +15,9 @@ import sys
 import typing as t
 from pathlib import Path
 
+import dj_database_url
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
-
-import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -59,7 +58,13 @@ SECRET_KEY = "=@%7ks9yhdz^n-qa5-w%8nl0)p6064=yc6)dpfoljxu9gqd5t%"
 DEBUG = getenv("DEBUG", "False", conv=boolconv)
 
 ALLOWED_HOSTS = ["*"]
-CSRF_TRUSTED_ORIGINS = ["127.0.0.1", ".bink.com"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1",
+    "https://*.bink.com",
+]
+
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # Application definition
 
@@ -107,6 +112,8 @@ WSGI_APPLICATION = "app.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+PG_OPTIONS = {"application_name": "eos"}
+
 if os.getenv("EOS_DATABASE_URI"):
     DATABASES = {
         "default": dj_database_url.config(
@@ -124,6 +131,7 @@ else:
             "PASSWORD": getenv("DATABASE_PASSWORD", required=False),
             "HOST": getenv("DATABASE_HOST", default="127.0.0.1"),
             "PORT": getenv("DATABASE_PORT", default="5432"),
+            "OPTIONS": PG_OPTIONS,
         },
     }
 
@@ -152,7 +160,6 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "en-gb"
 TIME_ZONE = "UTC"
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
@@ -237,7 +244,9 @@ OAUTH_TENANT_ID = getenv("OAUTH_TENANT_ID", required=SSO_ENABLED)
 OAUTH_CLIENT_ID = getenv("OAUTH_CLIENT_ID", required=SSO_ENABLED)
 OAUTH_CLIENT_SECRET = getenv("OAUTH_CLIENT_SECRET", required=SSO_ENABLED)
 OAUTH_REDIRECT_URI = getenv(
-    "OAUTH_REDIRECT_URI", required=SSO_ENABLED, default="http://localhost:9000/eos/admin/oidc/callback/"
+    "OAUTH_REDIRECT_URI",
+    required=SSO_ENABLED,
+    default="http://localhost:9000/eos/admin/oidc/callback/",
 )
 
 # if SSO is disabled, we use Django's default auth backend

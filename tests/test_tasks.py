@@ -1,9 +1,9 @@
 from datetime import date
 from unittest import mock
-from django.test import TestCase, override_settings
-from django.utils import timezone
 
 import responses
+from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from app import tasks
 from mids.models import Batch, BatchItem, BatchItemAction, BatchItemStatus
@@ -13,7 +13,11 @@ AMEX_CLIENT_SECRET = "shhhh"
 AMEX_CLIENT_ID = "client_id"
 
 
-@override_settings(AMEX_API_HOST=AMEX_API_HOST, AMEX_CLIENT_SECRET=AMEX_CLIENT_SECRET, AMEX_CLIENT_ID=AMEX_CLIENT_ID)
+@override_settings(
+    AMEX_API_HOST=AMEX_API_HOST,
+    AMEX_CLIENT_SECRET=AMEX_CLIENT_SECRET,
+    AMEX_CLIENT_ID=AMEX_CLIENT_ID,
+)
 class TestTasks(TestCase):
     def setUp(self) -> None:
         self.batch = Batch.objects.create(file_name="mids.csv")
@@ -47,7 +51,10 @@ class TestTasks(TestCase):
     def test_process_item(self) -> None:
         with mock.patch("app.tasks.MerchantRegApi") as mock_api_cls:
             mock_api = mock_api_cls.return_value
-            mock_api.add_merchant.return_value = (self.MockResponse({"some": "json"}), timezone.now())
+            mock_api.add_merchant.return_value = (
+                self.MockResponse({"some": "json"}),
+                timezone.now(),
+            )
             tasks.process_item(self.item.id)
             mock_api.add_merchant.assert_called_with("123456789", "wasabi-club", self.start, self.end)
         self.item.refresh_from_db()
@@ -73,4 +80,7 @@ class TestTasks(TestCase):
         self.assertEqual(self.item.status, BatchItemStatus.ERROR)
         self.assertEqual(self.item.error_code, "1040012")
         self.assertEqual(self.item.error_type, "Invalid request")
-        self.assertEqual(self.item.error_description, "Merchant ID already registered, updated, or deleted.")
+        self.assertEqual(
+            self.item.error_description,
+            "Merchant ID already registered, updated, or deleted.",
+        )

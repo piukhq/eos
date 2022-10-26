@@ -5,10 +5,10 @@ import typing as t
 from datetime import date, datetime
 
 import rq
-
 from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
+from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, StreamingHttpResponse
@@ -48,7 +48,11 @@ def queue_batches(batches: QuerySet, user_name: str) -> t.Tuple[t.List[int], t.L
             logger.info(f"Queuing items from batch {batch.file_name}")
             for item in batch.batchitem_set.select_for_update().filter(status=BatchItemStatus.PENDING):
                 try:
-                    tasks.task_queue.enqueue(tasks.process_item, item.id, retry=rq.Retry(max=1, interval=[10, 30, 60]))
+                    tasks.task_queue.enqueue(
+                        tasks.process_item,
+                        item.id,
+                        retry=rq.Retry(max=1, interval=[10, 30, 60]),
+                    )
                     queued.append(item.id)
                 except RedisError:
                     errors.append(item.id)
@@ -65,7 +69,10 @@ def queue_batches_action(modeladmin: admin.ModelAdmin, request: HttpRequest, que
     else:
         messages.warning(request, "No items queued. Perhaps none in the batch were PENDING")
     if errors:
-        messages.warning(request, "{} items were not queued due to an error with redis".format(len(errors)))
+        messages.warning(
+            request,
+            "{} items were not queued due to an error with redis".format(len(errors)),
+        )
 
 
 queue_batches_action.short_description = "Process batches"  # type:ignore
@@ -82,7 +89,14 @@ class TypedRow(t.TypedDict):
 
 @admin.register(Batch)
 class BatchAdmin(admin.ModelAdmin):
-    list_display = ["batch_filter_link", "time_uploaded", "export_link", "processed", "sender_name", "date_sent"]
+    list_display = [
+        "batch_filter_link",
+        "time_uploaded",
+        "export_link",
+        "processed",
+        "sender_name",
+        "date_sent",
+    ]
     fields = readonly_fields = ["file_name", "time_uploaded"]
     actions = [queue_batches_action]
 
@@ -91,7 +105,11 @@ class BatchAdmin(admin.ModelAdmin):
 
     def get_urls(self) -> t.List[URLPattern]:
         return [
-            path("<int:batch_id>/export/", admin.site.admin_view(self.export_as_csv), name="export_as_csv")
+            path(
+                "<int:batch_id>/export/",
+                admin.site.admin_view(self.export_as_csv),
+                name="export_as_csv",
+            )
         ] + super().get_urls()
 
     def export_as_csv(self, request: HttpRequest, batch_id: int) -> StreamingHttpResponse:
@@ -153,7 +171,14 @@ class BatchAdmin(admin.ModelAdmin):
         url = reverse("admin:export_as_csv", args=[obj.id])
         return format_html('<a href="{}">Export</a>', url)
 
-    REQUIRED_COLUMNS = ["mid", "start_date", "end_date", "merchant_slug", "provider_slug", "action"]
+    REQUIRED_COLUMNS = [
+        "mid",
+        "start_date",
+        "end_date",
+        "merchant_slug",
+        "provider_slug",
+        "action",
+    ]
     PROVIDERS = ["amex"]
 
     def validate_headers(
@@ -227,13 +252,16 @@ class BatchAdmin(admin.ModelAdmin):
         return typed_rows, errors
 
     def add_view(
-        self, request: HttpRequest, form_url: str = "", extra_context: t.Optional[t.Dict] = None
+        self,
+        request: HttpRequest,
+        form_url: str = "",
+        extra_context: t.Optional[t.Dict] = None,
     ) -> HttpResponse:
         errors = None
         if request.method == "POST":
             form = FileUploadForm(request.POST, request.FILES)
             if form.is_valid():
-                file = request.FILES["input_file"]
+                file = t.cast(UploadedFile, request.FILES["input_file"])
                 try:
                     reader = csv.DictReader(file.read().decode().splitlines())
                 except UnicodeDecodeError:
@@ -242,14 +270,17 @@ class BatchAdmin(admin.ModelAdmin):
 
                 extra, missing = self.validate_headers(request, set(reader.fieldnames or []))
                 if extra or missing:
-                    messages.error(request, f"Required column headers: {', '.join(self.REQUIRED_COLUMNS)}")
+                    messages.error(
+                        request,
+                        f"Required column headers: {', '.join(self.REQUIRED_COLUMNS)}",
+                    )
                     return redirect(reverse("admin:mids_batch_add"))
 
                 typed_rows, errors = self._process_rows(reader)
 
                 if not errors:
                     with transaction.atomic():
-                        batch = Batch.objects.create(file_name=file.name)
+                        batch = Batch.objects.create(file_name=file.name or "filename.csv")
                         BatchItem.objects.bulk_create(
                             [BatchItem(batch=batch, status=BatchItemStatus.PENDING, **row) for row in typed_rows]
                         )
@@ -263,7 +294,12 @@ class BatchAdmin(admin.ModelAdmin):
         return TemplateResponse(
             request,
             "admin/upload.html",
-            {"form": form, "file_errors": errors, "title": "Upload batch", "site_header": settings.SITE_HEADER},
+            {
+                "form": form,
+                "file_errors": errors,
+                "title": "Upload batch",
+                "site_header": settings.SITE_HEADER,
+            },
         )
 
 

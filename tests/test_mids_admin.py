@@ -1,8 +1,9 @@
 from datetime import date
+
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http.response import HttpResponse
 from django.test import Client, TestCase
-from django.contrib.auth.models import User
 from django.urls import reverse
 
 from app.tasks import task_queue
@@ -18,7 +19,7 @@ class TestMidsAdmin(TestCase):
         batch_file = SimpleUploadedFile(file_name, file_content, content_type="text/csv")
         self.client.login(username="admin", password="!Potato12345!")
         response = self.client.post(reverse("admin:mids_batch_add"), {"input_file": batch_file}, follow=True)
-        return response
+        return response  # type: ignore
 
     def test_file_ext(self) -> None:
         file_content = b"""mid,start_date,end_date,merchant_slug,provider_slug,action
@@ -103,7 +104,7 @@ class TestMidsAdmin(TestCase):
 
     def test_invalid_format(self) -> None:
         file_content = (
-            b"\x89PNG\r\n\xce\x98\xce\xb5\xce\xac \xcf\x84\xce\xb7\xcf\x82 \xce\x91\xcf\x85\xce\xb3\xce\xae\xcf\x82"
+            b"\x89PNG\r\n\xce\x98\xce\xb5\xce\xac \xcf\x84\xce\xb7" b"\xcf\x82 \xce\x91\xcf\x85\xce\xb3\xce\xae\xcf\x82"
         )
         response = self.upload_file(file_content)
         self.assertContains(response, "Invalid file format")
