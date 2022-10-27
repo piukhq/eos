@@ -14,6 +14,7 @@ rq = "*"
 sentry-sdk = "*"
 authlib = "*"
 tenacity = "*"
+tzdata = "*"
 gunicorn = "*"
 dj-database-url = "*"
 
