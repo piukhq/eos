@@ -28,7 +28,7 @@ def oauth_callback(request: HttpRequest) -> HttpResponse:
     /admin/oidc/callback/ handler - attempts to authenticate & log the user in.
     """
     token = oauth.eos.authorize_access_token(request)
-    userinfo = token['userinfo']
+    userinfo = token["userinfo"]
     user = authenticate(request, username=userinfo["email"])
 
     if not user:
