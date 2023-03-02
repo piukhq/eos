@@ -6,7 +6,7 @@ from django.http.response import HttpResponse
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from app.tasks import task_queue
+from eos.tasks import task_queue
 from mids.models import Batch, BatchItem, BatchItemAction, BatchItemStatus
 
 
@@ -139,4 +139,4 @@ class TestMidsAdmin(TestCase):
         self.assertEqual(1, len(task_queue))
         job = task_queue.fetch_job(task_queue.job_ids[0])
         self.assertEqual(pending_item_id, job.args[0])
-        self.assertEqual("app.tasks.process_item", job.func_name)
+        self.assertEqual("eos.tasks.process_item", job.func_name)

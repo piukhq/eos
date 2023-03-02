@@ -4,7 +4,7 @@ import typing as t
 import rq
 from django.core.management.base import BaseCommand
 
-from app.tasks import redis, task_queue
+from eos.tasks import redis, task_queue
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,7 @@ from unittest import mock
 import responses
 from django.test import TestCase, override_settings
 
-from app.agents.amex import BASE_URI, MerchantRegApi
+from eos.agents.amex import BASE_URI, MerchantRegApi
 
 AMEX_API_HOST = "http://localhost"
 AMEX_CLIENT_SECRET = "shhhhhh"

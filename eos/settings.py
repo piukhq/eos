@@ -32,7 +32,7 @@ class ConfigVarRequiredError(Exception):
     pass
 
 
-def getenv(key: str, default: str = None, conv: t.Callable = str, required: bool = True) -> t.Any:
+def getenv(key: str, default: t.Union[str, None] = None, conv: t.Callable = str, required: bool = True) -> t.Any:
     """If `default` is None, then the var is non-optional."""
     var = os.getenv(key, default)
     if var is None and required is True:
@@ -69,7 +69,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 # Application definition
 
 INSTALLED_APPS = [
-    "app.apps.EosAdminConfig",
+    "eos.apps.EosAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -88,7 +88,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "app.urls"
+ROOT_URLCONF = "eos.urls"
 
 TEMPLATES = [
     {
@@ -106,7 +106,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "app.wsgi.application"
+WSGI_APPLICATION = "eos.wsgi.application"
 
 
 # Database
@@ -251,4 +251,4 @@ OAUTH_REDIRECT_URI = getenv(
 
 # if SSO is disabled, we use Django's default auth backend
 if SSO_ENABLED:
-    AUTHENTICATION_BACKENDS = ["app.auth.AutoUserCreationBackend"]
+    AUTHENTICATION_BACKENDS = ["eos.auth.AutoUserCreationBackend"]

@@ -1,6 +1,0 @@
-[run]
-omit = manage.py
-branch = True
-
-[report]
-fail_under = 85

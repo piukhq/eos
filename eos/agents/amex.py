@@ -107,7 +107,7 @@ class MerchantRegApi:
         }
 
     def _call_api(
-        self, method: str, resource_uri: str, data: dict = None
+        self, method: str, resource_uri: str, data: t.Union[dict, None] = None
     ) -> t.Tuple[requests.Response, datetime.datetime]:
         client_priv_path, client_cert_path = self.load_cert_from_vault()
 

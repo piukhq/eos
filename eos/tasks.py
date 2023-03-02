@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from redis import Redis
 
-from app.agents.amex import MerchantRegApi
+from eos.agents.amex import MerchantRegApi
 from mids.models import BatchItem, BatchItemAction, BatchItemStatus
 
 logger = logging.getLogger(__name__)

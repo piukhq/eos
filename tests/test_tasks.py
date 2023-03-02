@@ -5,7 +5,7 @@ import responses
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from app import tasks
+from eos import tasks
 from mids.models import Batch, BatchItem, BatchItemAction, BatchItemStatus
 
 AMEX_API_HOST = "http://localhost"
@@ -37,7 +37,7 @@ class TestTasks(TestCase):
     @responses.activate
     def test_process_item_not_status_queued(self) -> None:
         BatchItem.objects.filter(id=self.item.id).update(status=BatchItemStatus.PENDING)
-        with mock.patch("app.tasks.MerchantRegApi") as mock_amex:
+        with mock.patch("eos.tasks.MerchantRegApi") as mock_amex:
             tasks.process_item(self.item.id)
             mock_amex.add_merchant.assert_not_called()
 
@@ -49,7 +49,7 @@ class TestTasks(TestCase):
             return self._json
 
     def test_process_item(self) -> None:
-        with mock.patch("app.tasks.MerchantRegApi") as mock_api_cls:
+        with mock.patch("eos.tasks.MerchantRegApi") as mock_api_cls:
             mock_api = mock_api_cls.return_value
             mock_api.add_merchant.return_value = (
                 self.MockResponse({"some": "json"}),
@@ -62,7 +62,7 @@ class TestTasks(TestCase):
         self.assertEqual(self.item.response, {"some": "json"})
 
     def test_process_item_error(self) -> None:
-        with mock.patch("app.tasks.MerchantRegApi") as mock_api_cls:
+        with mock.patch("eos.tasks.MerchantRegApi") as mock_api_cls:
             mock_api = mock_api_cls.return_value
             canned_json = {
                 "error_code": "1040012",
