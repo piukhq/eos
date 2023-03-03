@@ -12,6 +12,7 @@ FROM ghcr.io/binkhq/python:3.11
 WORKDIR /app
 COPY --from=build /src/dist/*.whl .
 COPY --from=build /src/manage.py .
+COPY --from=build /src/entrypoint.sh .
 RUN export wheel=$(find -type f -name "*.whl") && \
     pip install "$wheel" && rm $wheel
 
