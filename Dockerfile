@@ -18,4 +18,4 @@ RUN export wheel=$(find -type f -name "*.whl") && \
 
 ENTRYPOINT [ "/app/entrypoint.sh" ]
 CMD [ "gunicorn", "--workers=2", "--error-logfile=-", "--access-logfile=-", \
-        "--bind=0.0.0.0:9000", "app.wsgi:application" ]
+        "--bind=0.0.0.0:9000", "eos.wsgi:application" ]
