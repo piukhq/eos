@@ -1,8 +1,10 @@
-FROM ghcr.io/binkhq/python:3.11-poetry AS build
+FROM ghcr.io/binkhq/python:3.11 AS build
 
 WORKDIR /src
 ADD . .
 
+RUN apt update && apt -y install git
+RUN pip install poetry
 RUN poetry build
 
 # RUN poetry export -f requirements.txt -o requirements.txt
@@ -18,4 +20,4 @@ RUN export wheel=$(find -type f -name "*.whl") && \
 
 ENTRYPOINT [ "/app/entrypoint.sh" ]
 CMD [ "gunicorn", "--workers=2", "--error-logfile=-", "--access-logfile=-", \
-        "--bind=0.0.0.0:9000", "eos.wsgi:application" ]
+    "--bind=0.0.0.0:9000", "eos.wsgi:application" ]
