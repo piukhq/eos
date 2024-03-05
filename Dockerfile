@@ -3,6 +3,7 @@ FROM ghcr.io/binkhq/python:3.11 AS build
 WORKDIR /src
 ADD . .
 
+RUN apt update && apt -y install git
 RUN pip install poetry
 RUN poetry build
 
